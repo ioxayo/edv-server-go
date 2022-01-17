@@ -1,6 +1,6 @@
 #!/bin/bash
 
-curl -v -X POST http://localhost:$EDV_PORT \
+curl -v -X POST http://localhost:$EDV_PORT/edvs \
 -H "Content-Type: application/json; charset=utf-8" \
 -d @- << DATA
 {

@@ -19,3 +19,10 @@ type CreateEdvRequest struct {
 		Type string `json:"type"`
 	} `json:"hmac"`
 }
+
+// Create document request structure
+type CreateDocumentRequest struct {
+	Id       string      `json:"id"`
+	Sequence uint64      `json:"sequence"`
+	Jwe      interface{} `json:"jwe"`
+}
