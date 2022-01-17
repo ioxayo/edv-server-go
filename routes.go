@@ -66,4 +66,10 @@ var routes Routes = Routes{
 		"/edvs/{edvId}/docs/{docId}",
 		actions.UpdateDocument,
 	},
+	Route{
+		"DeleteDocument",
+		"DELETE",
+		"/edvs/{edvId}/docs/{docId}",
+		actions.DeleteDocument,
+	},
 }

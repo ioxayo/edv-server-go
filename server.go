@@ -35,7 +35,7 @@ func main() {
 
 	// Restrict client interactions
 	allowedHeaders := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
-	allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "PATCH", "OPTIONS"})
+	allowedMethods := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "PATCH", "OPTIONS", "DELETE"})
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
 
 	// Launch server

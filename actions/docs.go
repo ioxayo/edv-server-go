@@ -53,7 +53,7 @@ func CreateDocument(res http.ResponseWriter, req *http.Request) {
 // Get all documents
 func GetDocuments(res http.ResponseWriter, req *http.Request) {}
 
-// Get single document
+// Get document
 func GetDocument(res http.ResponseWriter, req *http.Request) {
 	edvId := mux.Vars(req)["edvId"]
 	docId := mux.Vars(req)["docId"]
@@ -98,8 +98,21 @@ func UpdateDocument(res http.ResponseWriter, req *http.Request) {
 		errors.HandleError(res, req, message, status)
 		return
 	}
-
 	docFile, _ := os.Create(docFileName)
 	docFileBytes, _ := json.MarshalIndent(cdReq, "", "  ")
 	docFile.Write(docFileBytes)
+}
+
+// Delete document
+func DeleteDocument(res http.ResponseWriter, req *http.Request) {
+	edvId := mux.Vars(req)["edvId"]
+	docId := mux.Vars(req)["docId"]
+	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
+	if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
+		message := fmt.Sprintf("Could not find document with ID '%s' in EDV with ID '%s'", docId, edvId)
+		status := http.StatusNotFound
+		errors.HandleError(res, req, message, status)
+		return
+	}
+	os.Remove(docFileName)
 }
