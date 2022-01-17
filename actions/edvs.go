@@ -48,6 +48,9 @@ func CreateEdv(res http.ResponseWriter, req *http.Request) {
 	configFile, _ = os.Create(configFileName)
 	configFileBytes, _ := json.MarshalIndent(ceReq, "", "  ")
 	configFile.Write(configFileBytes)
+	edvLocation := fmt.Sprintf("%s/edvs/%s", req.Host, edvId)
+	res.Header().Add("Location", edvLocation)
+	res.WriteHeader(http.StatusCreated)
 }
 
 // Get all EDVs
