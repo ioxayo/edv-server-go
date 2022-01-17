@@ -1,13 +1,14 @@
 #!/bin/bash
 
 EDV_ID=$1
+DOC_ID=$2
 curl -v \
--H "Content-Type: application/json; charset=utf-8" \
--X POST http://localhost:$EDV_PORT/edvs/$EDV_ID/docs \
+-H "Accept: application/json; charset=utf-8" \
+-X POST http://localhost:$EDV_PORT/edvs/$EDV_ID/docs/$DOC_ID \
 -d @- << DATA
 {
   "id": "94684128-c42c-4b28-adb0-aec77bf76044",
-  "sequence": 0,
+  "sequence": 1,
   "jwe": {
     "protected": "eyJlbmMiOiJDMjBQIn0",
     "recipients": [{

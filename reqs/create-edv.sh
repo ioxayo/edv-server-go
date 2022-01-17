@@ -1,7 +1,8 @@
 #!/bin/bash
 
-curl -v -X POST http://localhost:$EDV_PORT/edvs \
+curl -v \
 -H "Content-Type: application/json; charset=utf-8" \
+-X POST http://localhost:$EDV_PORT/edvs \
 -d @- << DATA
 {
   "sequence": 0,
@@ -17,4 +18,3 @@ curl -v -X POST http://localhost:$EDV_PORT/edvs \
   }
 }
 DATA
-
