@@ -33,12 +33,12 @@ func CreateEdv(res http.ResponseWriter, req *http.Request) {
 	}
 
 	var edvId string
-	if ceReq.ReferenceId != "" {
-		edvId = ceReq.ReferenceId
+	if ceReq.Id != "" {
+		edvId = ceReq.Id
 	} else {
 		edvId = uuid.NewString()
 	}
-	ceReq.ReferenceId = edvId
+	ceReq.Id = edvId
 
 	var configFileName string
 	var configFile *os.File

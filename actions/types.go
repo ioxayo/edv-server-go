@@ -2,6 +2,7 @@ package actions
 
 // Create EDV request structure
 type CreateEdvRequest struct {
+	Id                string   `json:"id,omitempty"`
 	Sequence          uint64   `json:"sequence"`
 	Controller        string   `json:"controller"`
 	InvokerSingle     string   `json:"invoker,omitempty"`
