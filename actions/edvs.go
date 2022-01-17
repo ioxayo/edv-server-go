@@ -40,8 +40,9 @@ func CreateEdv(res http.ResponseWriter, req *http.Request) {
 	}
 	ceReq.Id = edvId
 
-	edvDir := filepath.Join(".", "edvs", edvId)
-	os.MkdirAll(edvDir, os.ModePerm)
+	edvDirName := filepath.Join(".", "edvs", edvId)
+	docDirName := filepath.Join(edvDirName, "docs")
+	os.MkdirAll(docDirName, os.ModePerm)
 	configFileName := fmt.Sprintf("./edvs/%s/config.json", edvId)
 	configFile, _ := os.Create(configFileName)
 	configFileBytes, _ := json.MarshalIndent(ceReq, "", "  ")

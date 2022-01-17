@@ -2,6 +2,7 @@ package actions
 
 import (
 	"encoding/json"
+	goerrors "errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -32,12 +33,19 @@ func CreateDocument(res http.ResponseWriter, req *http.Request) {
 	}
 
 	edvId := mux.Vars(req)["edvId"]
+	edvDirName := fmt.Sprintf("./edvs/%s", edvId)
+	if _, err := os.Stat(edvDirName); goerrors.Is(err, os.ErrNotExist) {
+		message := fmt.Sprintf("Could not find EDV with ID '%s'", edvId)
+		status := http.StatusBadRequest
+		errors.HandleError(res, req, message, status)
+		return
+	}
 	docId := cdReq.Id
-	docFileName := fmt.Sprintf("./edvs/%s/%s.json", edvId, docId)
+	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
 	docFile, _ := os.Create(docFileName)
 	docFileBytes, _ := json.MarshalIndent(cdReq, "", "  ")
 	docFile.Write(docFileBytes)
-	docLocation := fmt.Sprintf("%s/edvs/%s/%s", req.Host, edvId, docId)
+	docLocation := fmt.Sprintf("%s/edvs/%s/docs/%s", req.Host, edvId, docId)
 	res.Header().Add("Location", docLocation)
 	res.WriteHeader(http.StatusCreated)
 }
@@ -45,8 +53,21 @@ func CreateDocument(res http.ResponseWriter, req *http.Request) {
 // Get all documents
 func GetDocuments(res http.ResponseWriter, req *http.Request) {}
 
-// Get document
-func GetDocument(res http.ResponseWriter, req *http.Request) {}
+// Get single document
+func GetDocument(res http.ResponseWriter, req *http.Request) {
+	edvId := mux.Vars(req)["edvId"]
+	docId := mux.Vars(req)["docId"]
+	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
+	if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
+		message := fmt.Sprintf("Could not find document with ID '%s' in EDV with ID '%s'", docId, edvId)
+		status := http.StatusNotFound
+		errors.HandleError(res, req, message, status)
+		return
+	}
+	docFile, _ := os.ReadFile(docFileName)
+	res.WriteHeader(http.StatusOK)
+	res.Write(docFile)
+}
 
 // Update document
 func UpdateDocument(res http.ResponseWriter, req *http.Request) {}

@@ -6,6 +6,7 @@ curl -v -X POST http://localhost:$EDV_PORT/edvs \
 {
   "sequence": 0,
   "controller": "did:example:123456789",
+  "referenceId": "abc5a436-21f9-4b4c-857d-1f5569b2600d",
   "keyAgreementKey": {
     "id": "https://example.com/kms/12345",
     "type": "X25519KeyAgreementKey2019"
