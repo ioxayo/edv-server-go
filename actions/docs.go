@@ -66,9 +66,8 @@ func GetDocument(res http.ResponseWriter, req *http.Request) {
 		errors.HandleError(res, req, message, status)
 		return
 	}
-	docFile, _ := os.ReadFile(docFileName)
-	res.WriteHeader(http.StatusOK)
-	res.Write(docFile)
+	docFileBytes, _ := os.ReadFile(docFileName)
+	res.Write(docFileBytes)
 }
 
 // Update document

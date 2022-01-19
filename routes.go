@@ -72,4 +72,10 @@ var routes Routes = Routes{
 		"/edvs/{edvId}/docs/{docId}",
 		actions.DeleteDocument,
 	},
+	Route{
+		"GetEdvHistory",
+		"GET",
+		"/edvs/{edvId}/history",
+		actions.GetEdvHistory,
+	},
 }

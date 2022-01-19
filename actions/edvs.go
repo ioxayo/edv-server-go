@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/ioxayo/edv-server-go/errors"
 )
 
@@ -91,7 +92,12 @@ func GetEdvs(res http.ResponseWriter, req *http.Request) {}
 func GetEdv(res http.ResponseWriter, req *http.Request) {}
 
 // Get history of EDV
-func GetEdvHistory(res http.ResponseWriter, req *http.Request) {}
+func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
+	edvId := mux.Vars(req)["edvId"]
+	historyFileName := fmt.Sprintf("./edvs/%s/history.json", edvId)
+	historyFileBytes, _ := os.ReadFile(historyFileName)
+	res.Write(historyFileBytes)
+}
 
 // Search EDV
 func SearchEdv(res http.ResponseWriter, req *http.Request) {}
