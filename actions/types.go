@@ -1,7 +1,7 @@
 package actions
 
-// Create EDV request structure
-type CreateEdvRequest struct {
+// Data vault configuration structure
+type DataVaultConfiguration struct {
 	Id                string   `json:"id,omitempty"`
 	Sequence          uint64   `json:"sequence"`
 	Controller        string   `json:"controller"`
@@ -20,9 +20,16 @@ type CreateEdvRequest struct {
 	} `json:"hmac"`
 }
 
-// Create document request structure
-type CreateDocumentRequest struct {
+// Encrypted document structure
+type EncryptedDocument struct {
 	Id       string      `json:"id"`
 	Sequence uint64      `json:"sequence"`
 	Jwe      interface{} `json:"jwe"`
+}
+
+// Get EDV history log entry structure
+type EdvHistoryLogEntry struct {
+	DocumentId string `json:"documentId"`
+	Sequence   uint64 `json:"sequence"`
+	Operation  string `json:"operation"`
 }

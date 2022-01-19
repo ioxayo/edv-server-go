@@ -1,7 +1,7 @@
 package errors
 
 // Generic api response structure
-type ErrorLog struct {
+type ErrorLogEntry struct {
 	Id      string
 	Url     string
 	Method  string

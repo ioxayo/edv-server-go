@@ -14,9 +14,9 @@ import (
 
 // Create document
 func CreateDocument(res http.ResponseWriter, req *http.Request) {
-	var cdReq CreateDocumentRequest
+	var encDoc EncryptedDocument
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
-	bodyUnmarshalErr := json.Unmarshal(body, &cdReq)
+	bodyUnmarshalErr := json.Unmarshal(body, &encDoc)
 
 	if bodyReadErr != nil {
 		message := fmt.Sprintf("Error parsing request body: %v", bodyReadErr)
@@ -40,11 +40,13 @@ func CreateDocument(res http.ResponseWriter, req *http.Request) {
 		errors.HandleError(res, req, message, status)
 		return
 	}
-	docId := cdReq.Id
+	docId := encDoc.Id
 	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
 	docFile, _ := os.Create(docFileName)
-	docFileBytes, _ := json.MarshalIndent(cdReq, "", "  ")
+	docFileBytes, _ := json.MarshalIndent(encDoc, "", "  ")
 	docFile.Write(docFileBytes)
+	UpdateEdvState(edvId, docId, "created")
+
 	docLocation := fmt.Sprintf("%s/edvs/%s/docs/%s", req.Host, edvId, docId)
 	res.Header().Add("Location", docLocation)
 	res.WriteHeader(http.StatusCreated)
@@ -71,9 +73,9 @@ func GetDocument(res http.ResponseWriter, req *http.Request) {
 
 // Update document
 func UpdateDocument(res http.ResponseWriter, req *http.Request) {
-	var cdReq CreateDocumentRequest
+	var encDoc EncryptedDocument
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
-	bodyUnmarshalErr := json.Unmarshal(body, &cdReq)
+	bodyUnmarshalErr := json.Unmarshal(body, &encDoc)
 
 	if bodyReadErr != nil {
 		message := fmt.Sprintf("Error parsing request body: %v", bodyReadErr)
@@ -99,8 +101,9 @@ func UpdateDocument(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	docFile, _ := os.Create(docFileName)
-	docFileBytes, _ := json.MarshalIndent(cdReq, "", "  ")
+	docFileBytes, _ := json.MarshalIndent(encDoc, "", "  ")
 	docFile.Write(docFileBytes)
+	UpdateEdvState(edvId, docId, "updated")
 }
 
 // Delete document
@@ -115,4 +118,5 @@ func DeleteDocument(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	os.Remove(docFileName)
+	UpdateEdvState(edvId, docId, "deleted")
 }

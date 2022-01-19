@@ -10,7 +10,7 @@ import (
 )
 
 func LogError(req *http.Request, message string, status int) {
-	errorLog := ErrorLog{
+	errorLog := ErrorLogEntry{
 		Id:      uuid.NewString(),
 		Url:     req.RequestURI,
 		Method:  req.Method,
