@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -93,10 +95,37 @@ func GetEdv(res http.ResponseWriter, req *http.Request) {}
 
 // Get history of EDV
 func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
+	var historyEntries []EdvHistoryLogEntry
+	var historyEntriesFiltered []EdvHistoryLogEntry
+
+	afterSequenceString := req.URL.Query().Get("afterSequence")
+	beforeSequenceString := req.URL.Query().Get("beforeSequence")
+	var afterSequence uint64
+	var beforeSequence uint64
+
 	edvId := mux.Vars(req)["edvId"]
 	historyFileName := fmt.Sprintf("./edvs/%s/history.json", edvId)
 	historyFileBytes, _ := os.ReadFile(historyFileName)
-	res.Write(historyFileBytes)
+	json.Unmarshal(historyFileBytes, &historyEntries)
+
+	if afterSequenceString != "" {
+		afterSequence, _ = strconv.ParseUint(afterSequenceString, 10, 64)
+	} else {
+		afterSequence = 0
+	}
+	if beforeSequenceString != "" {
+		beforeSequence, _ = strconv.ParseUint(beforeSequenceString, 10, 64)
+	} else {
+		beforeSequence = math.MaxUint64
+	}
+
+	for _, entry := range historyEntries {
+		if entry.Sequence > afterSequence && entry.Sequence < beforeSequence {
+			historyEntriesFiltered = append(historyEntriesFiltered, entry)
+		}
+	}
+	historyFileBytesFiltered, _ := json.MarshalIndent(historyEntriesFiltered, "", "  ")
+	res.Write(historyFileBytesFiltered)
 }
 
 // Search EDV
