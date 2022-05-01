@@ -12,6 +12,25 @@ import (
 	"github.com/ioxayo/edv-server-go/errors"
 )
 
+// Get document by ID
+func GetDocumentById(edvId string, docId string) EncryptedDocument {
+	var doc EncryptedDocument
+	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
+	docFileBytes, _ := os.ReadFile(docFileName)
+	json.Unmarshal(docFileBytes, &doc)
+	return doc
+}
+
+// Get documents by ID
+func GetDocumentsById(edvId string, docIds []string) []EncryptedDocument {
+	docs := make([]EncryptedDocument, 0)
+	for _, docId := range docIds {
+		doc := GetDocumentById(edvId, docId)
+		docs = append(docs, doc)
+	}
+	return docs
+}
+
 // Create document
 func CreateDocument(res http.ResponseWriter, req *http.Request) {
 	var encDoc EncryptedDocument

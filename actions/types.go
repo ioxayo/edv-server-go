@@ -25,6 +25,18 @@ type EncryptedDocument struct {
 	Id       string      `json:"id"`
 	Sequence uint64      `json:"sequence"`
 	Jwe      interface{} `json:"jwe"`
+	Indexed  []struct {
+		Sequence uint64 `json:"sequence"`
+		Hmac     struct {
+			Id   string `json:"id"`
+			Type string `json:"type"`
+		} `json:"hmac"`
+		Attributes []struct {
+			Name   string `json:"name"`
+			Value  string `json:"value"`
+			Unique string `json:"unique"`
+		} `json:"attributes"`
+	} `json:"indexed,omitempty"`
 }
 
 // Get EDV history log entry structure
@@ -33,3 +45,18 @@ type EdvHistoryLogEntry struct {
 	Sequence   uint64 `json:"sequence"`
 	Operation  string `json:"operation"`
 }
+
+// EDV search reuest body structure
+type EdvSearchRequest struct {
+	Index               string              `json:"index"`
+	EqualsAll           map[string]string   `json:"equals"`
+	EqualsAny           []map[string]string `json:"equals"`
+	ReturnFullDocuments bool                `json:"returnFullDocuments"`
+}
+
+// Search operators supported by this implementation of EDV
+type EdvSearchOperator string
+
+const (
+	equals EdvSearchOperator = "equals"
+)

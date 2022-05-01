@@ -2,6 +2,7 @@ package actions
 
 import (
 	"encoding/json"
+	goerrors "errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -31,16 +32,97 @@ func UpdateEdvState(edvId string, docId string, operation string) {
 	historyFileBytes, _ := os.ReadFile(historyFileName)
 	json.Unmarshal(historyFileBytes, &historyEntries)
 
+	// TODO: Retrieve and parse index
+
 	// Update parsed config and history
 	edvConfig.Sequence++
 	historyEntry := EdvHistoryLogEntry{docId, edvConfig.Sequence, operation}
 	historyEntries = append(historyEntries, historyEntry)
 	historyFileBytes, _ = json.MarshalIndent(historyEntries, "", "  ")
 	configFileBytes, _ = json.MarshalIndent(edvConfig, "", "  ")
+	// TODO: Update parsed index
 
 	// Persist updated config and history
 	os.WriteFile(configFileName, configFileBytes, os.ModePerm)
 	os.WriteFile(historyFileName, historyFileBytes, os.ModePerm)
+}
+
+// Retrieve document IDs associated with an index ID
+func IndexToDocuments(edvId string, indexId string) []string {
+	var indexEntries map[string][]string
+	indexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
+	indexFileBytes, _ := os.ReadFile(indexFileName)
+	json.Unmarshal(indexFileBytes, &indexEntries)
+	return indexEntries[indexId]
+}
+
+// Returns all document IDs for which condition is met for all key-value pairs of subfilter of given query operator
+func FetchMatchesAll(subfilter map[string]string, operator EdvSearchOperator, edvId string) []string {
+	indexId := subfilter["index"]
+	docIds := IndexToDocuments(edvId, indexId)
+	docMatches := make([]string, 0)
+	for _, docId := range docIds {
+		docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
+		if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		docFileBytes, _ := os.ReadFile(docFileName)
+		var encDoc EncryptedDocument
+		if err := json.Unmarshal(docFileBytes, &encDoc); err != nil {
+			continue
+		}
+		filterMatches := make(map[string]bool)
+		switch string(operator) {
+		case "equals":
+			indexes := encDoc.Indexed
+			for _, index := range indexes {
+				if index.Hmac.Id == indexId {
+					attributes := index.Attributes
+					for _, attribute := range attributes {
+						attributeName := attribute.Name
+						attributeValue := attribute.Value
+						if subfilterValue, subfilterExists := subfilter[attributeName]; subfilterValue == attributeValue && subfilterExists {
+							// Only attributes in the subfilter
+							// should affect the result
+							filterMatches[attributeName] = true
+							break
+						}
+					}
+					// There shouldn't be two indexes with the same ID
+					break
+				}
+			}
+		}
+		allSubfiltersMatch := true
+		for _, matches := range filterMatches {
+			if !matches {
+				allSubfiltersMatch = false
+				break
+			}
+		}
+		if allSubfiltersMatch {
+			docMatches = append(docMatches, docId)
+		}
+	}
+	return docMatches
+}
+
+// Returns all document IDs for which condition is met for any subfilter of given query operator
+func FetchMatchesAny(subfilters []map[string]string, operator EdvSearchOperator, edvId string) []string {
+	uniqueDocMatches := make(map[string]bool)
+	for _, subfilter := range subfilters {
+		subfilterMatches := FetchMatchesAll(subfilter, operator, edvId)
+		for _, match := range subfilterMatches {
+			if !uniqueDocMatches[match] {
+				uniqueDocMatches[match] = true
+			}
+		}
+	}
+	docMatches := make([]string, 0)
+	for docId := range uniqueDocMatches {
+		docMatches = append(docMatches, docId)
+	}
+	return docMatches
 }
 
 // Create EDV
@@ -74,14 +156,22 @@ func CreateEdv(res http.ResponseWriter, req *http.Request) {
 	edvDirName := filepath.Join(".", "edvs", edvId)
 	docDirName := filepath.Join(edvDirName, "docs")
 	os.MkdirAll(docDirName, os.ModePerm)
+
 	configFileName := fmt.Sprintf("./edvs/%s/config.json", edvId)
 	configFile, _ := os.Create(configFileName)
 	configFileBytes, _ := json.MarshalIndent(edvConfig, "", "  ")
 	configFile.Write(configFileBytes)
+
 	historyFileName := fmt.Sprintf("./edvs/%s/history.json", edvId)
 	historyFile, _ := os.Create(historyFileName)
 	historyFileString := "[]"
 	historyFile.WriteString(historyFileString)
+
+	indexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
+	indexFile, _ := os.Create(indexFileName)
+	indexFileString := "{}"
+	indexFile.WriteString(indexFileString)
+
 	edvLocation := fmt.Sprintf("%s/edvs/%s", req.Host, edvId)
 	res.Header().Add("Location", edvLocation)
 	res.WriteHeader(http.StatusCreated)
@@ -128,5 +218,61 @@ func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
 	res.Write(historyFileBytesFiltered)
 }
 
+// Search EDV with all query
+func SearchEdvAll(subfilter map[string]string, operator EdvSearchOperator, edvId string, searchRequest EdvSearchRequest) []byte {
+	if searchRequest.ReturnFullDocuments {
+		matches := FetchMatchesAll(subfilter, operator, edvId)
+		fullMatches := GetDocumentsById(edvId, matches)
+		fullMatchesBytes, _ := json.MarshalIndent(fullMatches, "", "  ")
+		return fullMatchesBytes
+	}
+	matches := FetchMatchesAll(subfilter, operator, edvId)
+	matchesBytes, _ := json.MarshalIndent(matches, "", "  ")
+	return matchesBytes
+}
+
+// Search EDV with any query
+func SearchEdvAny(subfilters []map[string]string, operator EdvSearchOperator, edvId string, searchRequest EdvSearchRequest) []byte {
+	if searchRequest.ReturnFullDocuments {
+		matches := FetchMatchesAny(subfilters, operator, edvId)
+		fullMatches := GetDocumentsById(edvId, matches)
+		fullMatchesBytes, _ := json.MarshalIndent(fullMatches, "", "  ")
+		return fullMatchesBytes
+	}
+	matches := FetchMatchesAny(subfilters, operator, edvId)
+	matchesBytes, _ := json.MarshalIndent(matches, "", "  ")
+	return matchesBytes
+}
+
 // Search EDV
-func SearchEdv(res http.ResponseWriter, req *http.Request) {}
+func SearchEdv(res http.ResponseWriter, req *http.Request) {
+	var edvSearchRequest EdvSearchRequest
+	body, bodyReadErr := ioutil.ReadAll(req.Body)
+	bodyUnmarshalErr := json.Unmarshal(body, &edvSearchRequest)
+
+	if bodyReadErr != nil {
+		message := fmt.Sprintf("Error parsing request body: %v", bodyReadErr)
+		status := http.StatusBadRequest
+		errors.HandleError(res, req, message, status)
+		return
+	}
+
+	if bodyUnmarshalErr != nil {
+		message := fmt.Sprintf("Error parsing request body: %v", bodyUnmarshalErr)
+		status := http.StatusBadRequest
+		errors.HandleError(res, req, message, status)
+		return
+	}
+
+	edvId := mux.Vars(req)["edvId"]
+	if equalsAll := edvSearchRequest.EqualsAll; equalsAll != nil {
+		matchesBytes := SearchEdvAll(equalsAll, "equals", edvId, edvSearchRequest)
+		res.Write(matchesBytes)
+		return
+	}
+	if equalsAny := edvSearchRequest.EqualsAny; equalsAny != nil {
+		matchesBytes := SearchEdvAny(equalsAny, "equals", edvId, edvSearchRequest)
+		res.Write(matchesBytes)
+		return
+	}
+}
