@@ -39,6 +39,21 @@ type EncryptedDocument struct {
 	} `json:"indexed,omitempty"`
 }
 
+// Encrypted document operations
+type EncryptedDocumentOperationOptions struct {
+	Created string `json:"created"`
+	Updated string `json:"updated"`
+	Deleted string `json:"deleted"`
+}
+
+var (
+	EncryptedDocumentOperations = EncryptedDocumentOperationOptions{
+		Created: "created",
+		Updated: "updated",
+		Deleted: "deleted",
+	}
+)
+
 // Get EDV history log entry structure
 type EdvHistoryLogEntry struct {
 	DocumentId string `json:"documentId"`

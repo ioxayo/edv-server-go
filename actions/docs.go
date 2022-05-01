@@ -64,7 +64,7 @@ func CreateDocument(res http.ResponseWriter, req *http.Request) {
 	docFile, _ := os.Create(docFileName)
 	docFileBytes, _ := json.MarshalIndent(encDoc, "", "  ")
 	docFile.Write(docFileBytes)
-	UpdateEdvState(edvId, docId, "created")
+	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Created)
 
 	docLocation := fmt.Sprintf("%s/edvs/%s/docs/%s", req.Host, edvId, docId)
 	res.Header().Add("Location", docLocation)
@@ -121,7 +121,7 @@ func UpdateDocument(res http.ResponseWriter, req *http.Request) {
 	docFile, _ := os.Create(docFileName)
 	docFileBytes, _ := json.MarshalIndent(encDoc, "", "  ")
 	docFile.Write(docFileBytes)
-	UpdateEdvState(edvId, docId, "updated")
+	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Updated)
 }
 
 // Delete document
@@ -136,5 +136,5 @@ func DeleteDocument(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	os.Remove(docFileName)
-	UpdateEdvState(edvId, docId, "deleted")
+	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Deleted)
 }
