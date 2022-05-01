@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/ioxayo/edv-server-go/common"
 	"github.com/ioxayo/edv-server-go/errors"
 )
 
@@ -20,6 +21,9 @@ import (
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
 func UpdateEdvState(edvId string, docId string, operation string) {
+	if !common.ValueInEnumStruct(operation, EncryptedDocumentOperations) {
+		return
+	}
 	// Retrieve and parse config
 	var edvConfig DataVaultConfiguration
 	configFileName := fmt.Sprintf("./edvs/%s/config.json", edvId)
@@ -57,10 +61,13 @@ func IndexToDocuments(edvId string, indexId string) []string {
 }
 
 // Returns all document IDs for which condition is met for all key-value pairs of subfilter of given query operator
-func FetchMatchesAll(subfilter map[string]string, operator EdvSearchOperator, edvId string) []string {
+func FetchMatchesAll(edvId string, subfilter map[string]string, operator string) []string {
 	indexId := subfilter["index"]
 	docIds := IndexToDocuments(edvId, indexId)
 	docMatches := make([]string, 0)
+	if !common.ValueInEnumStruct(operator, EdvSearchOperators) {
+		return docMatches
+	}
 	for _, docId := range docIds {
 		docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
 		if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
@@ -72,8 +79,8 @@ func FetchMatchesAll(subfilter map[string]string, operator EdvSearchOperator, ed
 			continue
 		}
 		filterMatches := make(map[string]bool)
-		switch string(operator) {
-		case "equals":
+		switch operator {
+		case EdvSearchOperators.Equals:
 			indexes := encDoc.Indexed
 			for _, index := range indexes {
 				if index.Hmac.Id == indexId {
@@ -108,17 +115,20 @@ func FetchMatchesAll(subfilter map[string]string, operator EdvSearchOperator, ed
 }
 
 // Returns all document IDs for which condition is met for any subfilter of given query operator
-func FetchMatchesAny(subfilters []map[string]string, operator EdvSearchOperator, edvId string) []string {
+func FetchMatchesAny(edvId string, subfilters []map[string]string, operator string) []string {
+	docMatches := make([]string, 0)
+	if !common.ValueInEnumStruct(operator, EdvSearchOperators) {
+		return docMatches
+	}
 	uniqueDocMatches := make(map[string]bool)
 	for _, subfilter := range subfilters {
-		subfilterMatches := FetchMatchesAll(subfilter, operator, edvId)
+		subfilterMatches := FetchMatchesAll(edvId, subfilter, operator)
 		for _, match := range subfilterMatches {
 			if !uniqueDocMatches[match] {
 				uniqueDocMatches[match] = true
 			}
 		}
 	}
-	docMatches := make([]string, 0)
 	for docId := range uniqueDocMatches {
 		docMatches = append(docMatches, docId)
 	}
@@ -219,27 +229,33 @@ func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
 }
 
 // Search EDV with all query
-func SearchEdvAll(subfilter map[string]string, operator EdvSearchOperator, edvId string, searchRequest EdvSearchRequest) []byte {
+func SearchEdvAll(edvId string, subfilter map[string]string, operator string, searchRequest EdvSearchRequest) []byte {
+	if !common.ValueInEnumStruct(operator, EdvSearchOperators) {
+		return make([]byte, 0)
+	}
 	if searchRequest.ReturnFullDocuments {
-		matches := FetchMatchesAll(subfilter, operator, edvId)
+		matches := FetchMatchesAll(edvId, subfilter, operator)
 		fullMatches := GetDocumentsById(edvId, matches)
 		fullMatchesBytes, _ := json.MarshalIndent(fullMatches, "", "  ")
 		return fullMatchesBytes
 	}
-	matches := FetchMatchesAll(subfilter, operator, edvId)
+	matches := FetchMatchesAll(edvId, subfilter, operator)
 	matchesBytes, _ := json.MarshalIndent(matches, "", "  ")
 	return matchesBytes
 }
 
 // Search EDV with any query
-func SearchEdvAny(subfilters []map[string]string, operator EdvSearchOperator, edvId string, searchRequest EdvSearchRequest) []byte {
+func SearchEdvAny(edvId string, subfilters []map[string]string, operator string, searchRequest EdvSearchRequest) []byte {
+	if !common.ValueInEnumStruct(operator, EdvSearchOperators) {
+		return make([]byte, 0)
+	}
 	if searchRequest.ReturnFullDocuments {
-		matches := FetchMatchesAny(subfilters, operator, edvId)
+		matches := FetchMatchesAny(edvId, subfilters, operator)
 		fullMatches := GetDocumentsById(edvId, matches)
 		fullMatchesBytes, _ := json.MarshalIndent(fullMatches, "", "  ")
 		return fullMatchesBytes
 	}
-	matches := FetchMatchesAny(subfilters, operator, edvId)
+	matches := FetchMatchesAny(edvId, subfilters, operator)
 	matchesBytes, _ := json.MarshalIndent(matches, "", "  ")
 	return matchesBytes
 }
@@ -266,12 +282,12 @@ func SearchEdv(res http.ResponseWriter, req *http.Request) {
 
 	edvId := mux.Vars(req)["edvId"]
 	if equalsAll := edvSearchRequest.EqualsAll; equalsAll != nil {
-		matchesBytes := SearchEdvAll(equalsAll, "equals", edvId, edvSearchRequest)
+		matchesBytes := SearchEdvAll(edvId, equalsAll, EdvSearchOperators.Equals, edvSearchRequest)
 		res.Write(matchesBytes)
 		return
 	}
 	if equalsAny := edvSearchRequest.EqualsAny; equalsAny != nil {
-		matchesBytes := SearchEdvAny(equalsAny, "equals", edvId, edvSearchRequest)
+		matchesBytes := SearchEdvAny(edvId, equalsAny, EdvSearchOperators.Equals, edvSearchRequest)
 		res.Write(matchesBytes)
 		return
 	}

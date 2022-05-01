@@ -70,8 +70,12 @@ type EdvSearchRequest struct {
 }
 
 // Search operators supported by this implementation of EDV
-type EdvSearchOperator string
+type EdvSearchOperatorOptions struct {
+	Equals string `json:"equals"`
+}
 
-const (
-	equals EdvSearchOperator = "equals"
+var (
+	EdvSearchOperators = EdvSearchOperatorOptions{
+		Equals: "equals",
+	}
 )
