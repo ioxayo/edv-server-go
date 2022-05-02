@@ -75,6 +75,7 @@ func UpdateEdvIndexCreate(edvId string, doc EncryptedDocument) {
 			// Build array for doc-ID-keyed map with index IDs
 			docIndexes = append(docIndexes, indexId)
 		}
+
 		// Bind index array to doc ID
 		edvIndex.IndexIds[docId] = docIndexes
 
@@ -116,6 +117,7 @@ func UpdateEdvIndexUpdate(edvId string, doc EncryptedDocument) {
 				edvIndex.DocIds[indexId] = []string{docId}
 			}
 		}
+
 		// Join existing array for doc-ID-keyed map
 		// with newly discovered index IDs
 		existingDocIndexes := edvIndex.IndexIds[docId]
@@ -126,6 +128,34 @@ func UpdateEdvIndexUpdate(edvId string, doc EncryptedDocument) {
 		edvIndexFileBytesAfter, _ := json.MarshalIndent(edvIndex, "", "  ")
 		os.WriteFile(edvIndexFileName, edvIndexFileBytesAfter, os.ModePerm)
 	}
+}
+
+// Update EDV index for delete operation
+// TODO: may need to add global locking around this function to
+// avoid inconsistent state from concurrent client updates
+func UpdateEdvIndexDelete(edvId string, docId string) {
+	// Fetch index file
+	var edvIndex EncryptedIndex
+	edvIndexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
+	edvIndexFileBytesBefore, _ := os.ReadFile(edvIndexFileName)
+	json.Unmarshal(edvIndexFileBytesBefore, &edvIndex)
+
+	// Retrieve index array for doc ID
+	docIndexIds := edvIndex.IndexIds[docId]
+
+	// Remove doc ID from all indexes
+	for _, indexId := range docIndexIds {
+		indexDocIds := edvIndex.DocIds[indexId]
+		updatedIndexDocIds := common.RemoveValueFromArray(indexDocIds, docId)
+		edvIndex.DocIds[indexId] = updatedIndexDocIds
+	}
+
+	// Remove indexes associated with doc ID
+	delete(edvIndex.IndexIds, docId)
+
+	// Update index file
+	edvIndexFileBytesAfter, _ := json.MarshalIndent(edvIndex, "", "  ")
+	os.WriteFile(edvIndexFileName, edvIndexFileBytesAfter, os.ModePerm)
 }
 
 // Retrieve document IDs associated with an index ID

@@ -23,3 +23,14 @@ func IsValueInArray[V comparable](array []V, value V) bool {
 	}
 	return false
 }
+
+// Remove value from array
+func RemoveValueFromArray[V comparable](array []V, value V) []V {
+	newArray := make([]V, 0)
+	for _, val := range array {
+		if val != value {
+			newArray = append(newArray, val)
+		}
+	}
+	return newArray
+}

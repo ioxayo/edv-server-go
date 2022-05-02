@@ -139,4 +139,5 @@ func DeleteDocument(res http.ResponseWriter, req *http.Request) {
 	}
 	os.Remove(docFileName)
 	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Delete)
+	UpdateEdvIndexDelete(edvId, docId)
 }
