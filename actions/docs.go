@@ -33,9 +33,9 @@ func GetDocumentsById(edvId string, docIds []string) []EncryptedDocument {
 
 // Create document
 func CreateDocument(res http.ResponseWriter, req *http.Request) {
-	var encDoc EncryptedDocument
+	var doc EncryptedDocument
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
-	bodyUnmarshalErr := json.Unmarshal(body, &encDoc)
+	bodyUnmarshalErr := json.Unmarshal(body, &doc)
 
 	if bodyReadErr != nil {
 		message := fmt.Sprintf("Error parsing request body: %v", bodyReadErr)
@@ -59,12 +59,13 @@ func CreateDocument(res http.ResponseWriter, req *http.Request) {
 		errors.HandleError(res, req, message, status)
 		return
 	}
-	docId := encDoc.Id
+	docId := doc.Id
 	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
 	docFile, _ := os.Create(docFileName)
-	docFileBytes, _ := json.MarshalIndent(encDoc, "", "  ")
+	docFileBytes, _ := json.MarshalIndent(doc, "", "  ")
 	docFile.Write(docFileBytes)
-	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Created)
+	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Create)
+	UpdateEdvIndexCreate(edvId, doc)
 
 	docLocation := fmt.Sprintf("%s/edvs/%s/docs/%s", req.Host, edvId, docId)
 	res.Header().Add("Location", docLocation)
@@ -91,9 +92,9 @@ func GetDocument(res http.ResponseWriter, req *http.Request) {
 
 // Update document
 func UpdateDocument(res http.ResponseWriter, req *http.Request) {
-	var encDoc EncryptedDocument
+	var doc EncryptedDocument
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
-	bodyUnmarshalErr := json.Unmarshal(body, &encDoc)
+	bodyUnmarshalErr := json.Unmarshal(body, &doc)
 
 	if bodyReadErr != nil {
 		message := fmt.Sprintf("Error parsing request body: %v", bodyReadErr)
@@ -119,9 +120,9 @@ func UpdateDocument(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	docFile, _ := os.Create(docFileName)
-	docFileBytes, _ := json.MarshalIndent(encDoc, "", "  ")
+	docFileBytes, _ := json.MarshalIndent(doc, "", "  ")
 	docFile.Write(docFileBytes)
-	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Updated)
+	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Update)
 }
 
 // Delete document
@@ -136,5 +137,5 @@ func DeleteDocument(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	os.Remove(docFileName)
-	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Deleted)
+	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Delete)
 }

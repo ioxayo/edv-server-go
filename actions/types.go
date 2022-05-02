@@ -39,18 +39,26 @@ type EncryptedDocument struct {
 	} `json:"indexed,omitempty"`
 }
 
+// Encrypted index structure
+type EncryptedIndex struct {
+	// maps index IDs to doc IDs for quick search responses
+	DocIds map[string][]string `json:"docIds"`
+	// maps doc IDs to index IDs for quick update bookkeeping
+	IndexIds map[string][]string `json:"indexIds"`
+}
+
 // Encrypted document operations
 type EncryptedDocumentOperationOptions struct {
-	Created string `json:"created"`
-	Updated string `json:"updated"`
-	Deleted string `json:"deleted"`
+	Create string `json:"created"`
+	Update string `json:"updated"`
+	Delete string `json:"deleted"`
 }
 
 var (
 	EncryptedDocumentOperations = EncryptedDocumentOperationOptions{
-		Created: "created",
-		Updated: "updated",
-		Deleted: "deleted",
+		Create: "created",
+		Update: "updated",
+		Delete: "deleted",
 	}
 )
 

@@ -36,28 +36,60 @@ func UpdateEdvState(edvId string, docId string, operation string) {
 	historyFileBytes, _ := os.ReadFile(historyFileName)
 	json.Unmarshal(historyFileBytes, &historyEntries)
 
-	// TODO: Retrieve and parse index
-
 	// Update parsed config and history
 	edvConfig.Sequence++
 	historyEntry := EdvHistoryLogEntry{docId, edvConfig.Sequence, operation}
 	historyEntries = append(historyEntries, historyEntry)
 	historyFileBytes, _ = json.MarshalIndent(historyEntries, "", "  ")
 	configFileBytes, _ = json.MarshalIndent(edvConfig, "", "  ")
-	// TODO: Update parsed index
 
 	// Persist updated config and history
 	os.WriteFile(configFileName, configFileBytes, os.ModePerm)
 	os.WriteFile(historyFileName, historyFileBytes, os.ModePerm)
 }
 
+// Update EDV index
+// TODO: may need to add global locking around this function to
+// avoid inconsistent state from concurrent client updates
+func UpdateEdvIndexCreate(edvId string, doc EncryptedDocument) {
+	// Check if doc has index
+	if docIndex := doc.Indexed; docIndex != nil {
+		var edvIndex EncryptedIndex
+		// Fetch index file
+		edvIndexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
+		edvIndexFileBytesBefore, _ := os.ReadFile(edvIndexFileName)
+		json.Unmarshal(edvIndexFileBytesBefore, &edvIndex)
+
+		docId := doc.Id
+		docIndexes := make([]string, 0)
+		// Iterate through all doc indexes
+		for _, index := range docIndex {
+			indexId := index.Hmac.Id
+			// Update or initialize array for index-ID-keyed map with doc ID
+			if docIds, indexExists := edvIndex.DocIds[indexId]; indexExists {
+				docIds = append(docIds, docId)
+				edvIndex.DocIds[indexId] = docIds
+			} else {
+				edvIndex.DocIds[indexId] = []string{docId}
+			}
+			// Build array for doc-ID-keyed map with index IDs
+			docIndexes = append(docIndexes, indexId)
+		}
+		edvIndex.IndexIds[docId] = docIndexes
+
+		// Update index file
+		edvIndexFileBytesAfter, _ := json.MarshalIndent(edvIndex, "", "  ")
+		os.WriteFile(edvIndexFileName, edvIndexFileBytesAfter, os.ModePerm)
+	}
+}
+
 // Retrieve document IDs associated with an index ID
 func IndexToDocuments(edvId string, indexId string) []string {
-	var indexEntries map[string][]string
+	var index EncryptedIndex
 	indexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
 	indexFileBytes, _ := os.ReadFile(indexFileName)
-	json.Unmarshal(indexFileBytes, &indexEntries)
-	return indexEntries[indexId]
+	json.Unmarshal(indexFileBytes, &index)
+	return index.DocIds[indexId]
 }
 
 // Returns all document IDs for which condition is met for all key-value pairs of subfilter of given query operator
@@ -74,14 +106,14 @@ func FetchMatchesAll(edvId string, subfilter map[string]string, operator string)
 			continue
 		}
 		docFileBytes, _ := os.ReadFile(docFileName)
-		var encDoc EncryptedDocument
-		if err := json.Unmarshal(docFileBytes, &encDoc); err != nil {
+		var doc EncryptedDocument
+		if err := json.Unmarshal(docFileBytes, &doc); err != nil {
 			continue
 		}
 		filterMatches := make(map[string]bool)
 		switch operator {
 		case EdvSearchOperators.Equals:
-			indexes := encDoc.Indexed
+			indexes := doc.Indexed
 			for _, index := range indexes {
 				if index.Hmac.Id == indexId {
 					attributes := index.Attributes
@@ -179,7 +211,7 @@ func CreateEdv(res http.ResponseWriter, req *http.Request) {
 
 	indexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
 	indexFile, _ := os.Create(indexFileName)
-	indexFileString := "{}"
+	indexFileString := "{ docIds: {}, indexIds: {} }"
 	indexFile.WriteString(indexFileString)
 
 	edvLocation := fmt.Sprintf("%s/edvs/%s", req.Host, edvId)
