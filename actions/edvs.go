@@ -21,7 +21,7 @@ import (
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
 func UpdateEdvState(edvId string, docId string, operation string) {
-	if !common.ValueInEnumStruct(operation, EncryptedDocumentOperations) {
+	if !common.IsValidEnumMember(EncryptedDocumentOperations, operation) {
 		return
 	}
 	// Retrieve and parse config
@@ -65,7 +65,7 @@ func FetchMatchesAll(edvId string, subfilter map[string]string, operator string)
 	indexId := subfilter["index"]
 	docIds := IndexToDocuments(edvId, indexId)
 	docMatches := make([]string, 0)
-	if !common.ValueInEnumStruct(operator, EdvSearchOperators) {
+	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
 		return docMatches
 	}
 	for _, docId := range docIds {
@@ -117,7 +117,7 @@ func FetchMatchesAll(edvId string, subfilter map[string]string, operator string)
 // Returns all document IDs for which condition is met for any subfilter of given query operator
 func FetchMatchesAny(edvId string, subfilters []map[string]string, operator string) []string {
 	docMatches := make([]string, 0)
-	if !common.ValueInEnumStruct(operator, EdvSearchOperators) {
+	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
 		return docMatches
 	}
 	uniqueDocMatches := make(map[string]bool)
@@ -230,7 +230,7 @@ func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
 
 // Search EDV with all query
 func SearchEdvAll(edvId string, subfilter map[string]string, operator string, searchRequest EdvSearchRequest) []byte {
-	if !common.ValueInEnumStruct(operator, EdvSearchOperators) {
+	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
 		return make([]byte, 0)
 	}
 	if searchRequest.ReturnFullDocuments {
@@ -246,7 +246,7 @@ func SearchEdvAll(edvId string, subfilter map[string]string, operator string, se
 
 // Search EDV with any query
 func SearchEdvAny(edvId string, subfilters []map[string]string, operator string, searchRequest EdvSearchRequest) []byte {
-	if !common.ValueInEnumStruct(operator, EdvSearchOperators) {
+	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
 		return make([]byte, 0)
 	}
 	if searchRequest.ReturnFullDocuments {
