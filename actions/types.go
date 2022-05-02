@@ -54,6 +54,10 @@ var (
 	}
 )
 
+func (enumStruct EncryptedDocumentOperationOptions) IsEnum() bool {
+	return true
+}
+
 // Get EDV history log entry structure
 type EdvHistoryLogEntry struct {
 	DocumentId string `json:"documentId"`
@@ -79,3 +83,7 @@ var (
 		Equals: "equals",
 	}
 )
+
+func (enumStruct EdvSearchOperatorOptions) IsEnum() bool {
+	return true
+}
