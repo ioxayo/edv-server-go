@@ -48,24 +48,24 @@ func UpdateEdvState(edvId string, docId string, operation string) {
 	os.WriteFile(historyFileName, historyFileBytes, os.ModePerm)
 }
 
-// Update EDV index
+// Update EDV index for create operation
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
 func UpdateEdvIndexCreate(edvId string, doc EncryptedDocument) {
 	// Check if doc has index
 	if docIndex := doc.Indexed; docIndex != nil {
-		var edvIndex EncryptedIndex
 		// Fetch index file
+		var edvIndex EncryptedIndex
 		edvIndexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
 		edvIndexFileBytesBefore, _ := os.ReadFile(edvIndexFileName)
 		json.Unmarshal(edvIndexFileBytesBefore, &edvIndex)
 
+		// Iterate through all doc indexes
 		docId := doc.Id
 		docIndexes := make([]string, 0)
-		// Iterate through all doc indexes
 		for _, index := range docIndex {
-			indexId := index.Hmac.Id
 			// Update or initialize array for index-ID-keyed map with doc ID
+			indexId := index.Hmac.Id
 			if docIds, indexExists := edvIndex.DocIds[indexId]; indexExists {
 				docIds = append(docIds, docId)
 				edvIndex.DocIds[indexId] = docIds
@@ -75,7 +75,52 @@ func UpdateEdvIndexCreate(edvId string, doc EncryptedDocument) {
 			// Build array for doc-ID-keyed map with index IDs
 			docIndexes = append(docIndexes, indexId)
 		}
+		// Bind index array to doc ID
 		edvIndex.IndexIds[docId] = docIndexes
+
+		// Update index file
+		edvIndexFileBytesAfter, _ := json.MarshalIndent(edvIndex, "", "  ")
+		os.WriteFile(edvIndexFileName, edvIndexFileBytesAfter, os.ModePerm)
+	}
+}
+
+// Update EDV index for update operation
+// TODO: may need to add global locking around this function to
+// avoid inconsistent state from concurrent client updates
+func UpdateEdvIndexUpdate(edvId string, doc EncryptedDocument) {
+	// Check if doc has index
+	if docIndex := doc.Indexed; docIndex != nil {
+		// Fetch index file
+		var edvIndex EncryptedIndex
+		edvIndexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
+		edvIndexFileBytesBefore, _ := os.ReadFile(edvIndexFileName)
+		json.Unmarshal(edvIndexFileBytesBefore, &edvIndex)
+
+		// Iterate through all doc indexes
+		docId := doc.Id
+		newDocIndexes := make([]string, 0)
+		for _, index := range docIndex {
+			// Update or initialize array for index-ID-keyed map with doc ID
+			indexId := index.Hmac.Id
+			if docIds, indexExists := edvIndex.DocIds[indexId]; indexExists {
+				// Since this doc already exists, we should only
+				// add it to index if it is not already tracked
+				if isDocIndexed := common.IsValueInArray(docIds, docId); !isDocIndexed {
+					docIds = append(docIds, docId)
+					edvIndex.DocIds[indexId] = docIds
+				} else {
+					// Build array of index IDs that are not yet tracking this doc
+					newDocIndexes = append(newDocIndexes, indexId)
+				}
+			} else {
+				edvIndex.DocIds[indexId] = []string{docId}
+			}
+		}
+		// Join existing array for doc-ID-keyed map
+		// with newly discovered index IDs
+		existingDocIndexes := edvIndex.IndexIds[docId]
+		updatedDocIndexes := append(existingDocIndexes, newDocIndexes...)
+		edvIndex.IndexIds[docId] = updatedDocIndexes
 
 		// Update index file
 		edvIndexFileBytesAfter, _ := json.MarshalIndent(edvIndex, "", "  ")

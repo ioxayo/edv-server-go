@@ -13,3 +13,13 @@ func IsValidEnumMember[E EnumStruct](enumStruct E, value interface{}) bool {
 	}
 	return false
 }
+
+// Check if value is in array
+func IsValueInArray[V comparable](array []V, value V) bool {
+	for _, val := range array {
+		if val == value {
+			return true
+		}
+	}
+	return false
+}

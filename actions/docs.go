@@ -123,6 +123,7 @@ func UpdateDocument(res http.ResponseWriter, req *http.Request) {
 	docFileBytes, _ := json.MarshalIndent(doc, "", "  ")
 	docFile.Write(docFileBytes)
 	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Update)
+	UpdateEdvIndexUpdate(edvId, doc)
 }
 
 // Delete document
