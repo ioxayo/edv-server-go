@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 EDV_ID=$1
 DOC_ID=$2
+
 curl -v \
 -H "Content-Type: application/json; charset=utf-8" \
 -X POST http://localhost:$EDV_PORT/edvs/$EDV_ID/docs/$DOC_ID \

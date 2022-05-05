@@ -286,7 +286,7 @@ func CreateEdv(res http.ResponseWriter, req *http.Request) {
 
 	indexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
 	indexFile, _ := os.Create(indexFileName)
-	indexFileString := "{ docIds: {}, indexIds: {} }"
+	indexFileString := "{\n  \"docIds\": {},\n  \"indexIds\": {}\n}"
 	indexFile.WriteString(indexFileString)
 
 	edvLocation := fmt.Sprintf("%s/edvs/%s", req.Host, edvId)
