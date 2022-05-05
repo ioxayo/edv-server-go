@@ -38,7 +38,7 @@ var routes Routes = Routes{
 	},
 	Route{
 		"SearchEdv",
-		"GET",
+		"POST",
 		"/edvs/{edvId}/query",
 		actions.SearchEdv,
 	},

@@ -12,13 +12,15 @@ curl -v \
   "sequence": 1,
   "jwe": {
     "protected": "eyJlbmMiOiJDMjBQIn0",
-    "recipients": [{
-      "header": {
-        "alg": "A256KW",
-        "kid": "https://example.com/kms/zSDn2MzzbxmX"
-      },
-      "encrypted_key": "OR1vdCNvf_B68mfUxFQVT-vyXVrBembuiM40mAAjDC1-Qu5iArDbug"
-    }],
+    "recipients": [
+      {
+        "header": {
+          "alg": "A256KW",
+          "kid": "https://example.com/kms/zSDn2MzzbxmX"
+        },
+        "encrypted_key": "OR1vdCNvf_B68mfUxFQVT-vyXVrBembuiM40mAAjDC1-Qu5iArDbug"
+      }
+    ],
     "iv": "i8Nins2vTI3PlrYW",
     "ciphertext": "Cb-963UCXblINT8F6MDHzMJN9EAhK3I",
     "tag": "pfZO0JulJcrc3trOZy8rjA"

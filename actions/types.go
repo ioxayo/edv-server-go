@@ -1,5 +1,7 @@
 package actions
 
+import "encoding/json"
+
 // Data vault configuration structure
 type DataVaultConfiguration struct {
 	Id                string   `json:"id,omitempty"`
@@ -34,7 +36,7 @@ type EncryptedDocument struct {
 		Attributes []struct {
 			Name   string `json:"name"`
 			Value  string `json:"value"`
-			Unique string `json:"unique"`
+			Unique bool   `json:"unique"`
 		} `json:"attributes"`
 	} `json:"indexed,omitempty"`
 }
@@ -75,10 +77,9 @@ type EdvHistoryLogEntry struct {
 
 // EDV search reuest body structure
 type EdvSearchRequest struct {
-	Index               string              `json:"index"`
-	EqualsAll           map[string]string   `json:"equals"`
-	EqualsAny           []map[string]string `json:"equals"`
-	ReturnFullDocuments bool                `json:"returnFullDocuments"`
+	Index               string          `json:"index"`
+	Equals              json.RawMessage `json:"equals"` // map[string]string | []map[string]string
+	ReturnFullDocuments bool            `json:"returnFullDocuments"`
 }
 
 // Search operators supported by this implementation of EDV

@@ -168,10 +168,10 @@ func IndexToDocuments(edvId string, indexId string) []string {
 }
 
 // Returns all document IDs for which condition is met for all key-value pairs of subfilter of given query operator
-func FetchMatchesAll(edvId string, subfilter map[string]string, operator string) []string {
-	indexId := subfilter["index"]
+func FetchMatchesAll(edvId string, indexId string, subfilter map[string]string, operator string) []string {
 	docIds := IndexToDocuments(edvId, indexId)
 	docMatches := make([]string, 0)
+
 	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
 		return docMatches
 	}
@@ -180,12 +180,19 @@ func FetchMatchesAll(edvId string, subfilter map[string]string, operator string)
 		if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
 			continue
 		}
+
 		docFileBytes, _ := os.ReadFile(docFileName)
 		var doc EncryptedDocument
 		if err := json.Unmarshal(docFileBytes, &doc); err != nil {
 			continue
 		}
+
+		// Track subfilter matches in map initialized with keys in subfilter
 		filterMatches := make(map[string]bool)
+		for key, _ := range subfilter {
+			filterMatches[key] = false
+		}
+
 		switch operator {
 		case EdvSearchOperators.Equals:
 			indexes := doc.Indexed
@@ -207,6 +214,8 @@ func FetchMatchesAll(edvId string, subfilter map[string]string, operator string)
 				}
 			}
 		}
+
+		// Check if all subfilter pairs match
 		allSubfiltersMatch := true
 		for _, matches := range filterMatches {
 			if !matches {
@@ -222,14 +231,14 @@ func FetchMatchesAll(edvId string, subfilter map[string]string, operator string)
 }
 
 // Returns all document IDs for which condition is met for any subfilter of given query operator
-func FetchMatchesAny(edvId string, subfilters []map[string]string, operator string) []string {
+func FetchMatchesAny(edvId string, indexId string, subfilters []map[string]string, operator string) []string {
 	docMatches := make([]string, 0)
 	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
 		return docMatches
 	}
 	uniqueDocMatches := make(map[string]bool)
 	for _, subfilter := range subfilters {
-		subfilterMatches := FetchMatchesAll(edvId, subfilter, operator)
+		subfilterMatches := FetchMatchesAll(edvId, indexId, subfilter, operator)
 		for _, match := range subfilterMatches {
 			if !uniqueDocMatches[match] {
 				uniqueDocMatches[match] = true
@@ -336,33 +345,33 @@ func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
 }
 
 // Search EDV with all query
-func SearchEdvAll(edvId string, subfilter map[string]string, operator string, searchRequest EdvSearchRequest) []byte {
+func SearchEdvAll(edvId string, indexId string, subfilter map[string]string, operator string, searchRequest EdvSearchRequest) []byte {
 	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
 		return make([]byte, 0)
 	}
 	if searchRequest.ReturnFullDocuments {
-		matches := FetchMatchesAll(edvId, subfilter, operator)
+		matches := FetchMatchesAll(edvId, indexId, subfilter, operator)
 		fullMatches := GetDocumentsById(edvId, matches)
 		fullMatchesBytes, _ := json.MarshalIndent(fullMatches, "", "  ")
 		return fullMatchesBytes
 	}
-	matches := FetchMatchesAll(edvId, subfilter, operator)
+	matches := FetchMatchesAll(edvId, indexId, subfilter, operator)
 	matchesBytes, _ := json.MarshalIndent(matches, "", "  ")
 	return matchesBytes
 }
 
 // Search EDV with any query
-func SearchEdvAny(edvId string, subfilters []map[string]string, operator string, searchRequest EdvSearchRequest) []byte {
+func SearchEdvAny(edvId string, indexId string, subfilters []map[string]string, operator string, searchRequest EdvSearchRequest) []byte {
 	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
 		return make([]byte, 0)
 	}
 	if searchRequest.ReturnFullDocuments {
-		matches := FetchMatchesAny(edvId, subfilters, operator)
+		matches := FetchMatchesAny(edvId, indexId, subfilters, operator)
 		fullMatches := GetDocumentsById(edvId, matches)
 		fullMatchesBytes, _ := json.MarshalIndent(fullMatches, "", "  ")
 		return fullMatchesBytes
 	}
-	matches := FetchMatchesAny(edvId, subfilters, operator)
+	matches := FetchMatchesAny(edvId, indexId, subfilters, operator)
 	matchesBytes, _ := json.MarshalIndent(matches, "", "  ")
 	return matchesBytes
 }
@@ -388,13 +397,19 @@ func SearchEdv(res http.ResponseWriter, req *http.Request) {
 	}
 
 	edvId := mux.Vars(req)["edvId"]
-	if equalsAll := edvSearchRequest.EqualsAll; equalsAll != nil {
-		matchesBytes := SearchEdvAll(edvId, equalsAll, EdvSearchOperators.Equals, edvSearchRequest)
+	indexId := edvSearchRequest.Index
+	equals := edvSearchRequest.Equals
+	var equalsAll map[string]string
+	var equalsAny []map[string]string
+
+	if equalsAllUnmarshalErr := json.Unmarshal(equals, &equalsAll); equalsAllUnmarshalErr == nil {
+		matchesBytes := SearchEdvAll(edvId, indexId, equalsAll, EdvSearchOperators.Equals, edvSearchRequest)
 		res.Write(matchesBytes)
 		return
 	}
-	if equalsAny := edvSearchRequest.EqualsAny; equalsAny != nil {
-		matchesBytes := SearchEdvAny(edvId, equalsAny, EdvSearchOperators.Equals, edvSearchRequest)
+
+	if equalsAnyUnmarshalErr := json.Unmarshal(equals, &equalsAny); equalsAnyUnmarshalErr == nil {
+		matchesBytes := SearchEdvAny(edvId, indexId, equalsAny, EdvSearchOperators.Equals, edvSearchRequest)
 		res.Write(matchesBytes)
 		return
 	}
