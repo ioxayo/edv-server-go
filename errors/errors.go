@@ -2,6 +2,7 @@ package errors
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -25,4 +26,8 @@ func HandleError(res http.ResponseWriter, req *http.Request, message string, sta
 	res.WriteHeader(status)
 	resBytes, _ := json.Marshal(common.GenericResponse{message, false})
 	res.Write(resBytes)
+}
+
+func (err SimpleError) Error() string {
+	return fmt.Sprintf("%s error: %s", err.Status, err.Message)
 }

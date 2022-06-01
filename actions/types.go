@@ -51,9 +51,9 @@ type EncryptedIndex struct {
 
 // Encrypted document operations
 type EncryptedDocumentOperationOptions struct {
-	Create string `json:"created"`
-	Update string `json:"updated"`
-	Delete string `json:"deleted"`
+	Create string
+	Update string
+	Delete string
 }
 
 var (

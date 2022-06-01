@@ -7,7 +7,10 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/ioxayo/edv-server-go/storage"
 )
+
+var Provider storage.StorageProvider
 
 // NewRouter function configures a new router to the API
 func NewRouter(routes Routes) *mux.Router {
@@ -28,6 +31,16 @@ func main() {
 	port := os.Getenv("EDV_PORT")
 	if port == "" {
 		log.Fatal("$EDV_PORT must be set")
+	}
+
+	// Setup storage provider
+	// TODO: accept host and root from stdin
+	// TODO: setup switch statement for different storage provider types
+	edvHost := "http://localhost:5000"
+	currentDir, _ := os.Getwd()
+	Provider = storage.LocalStorageConfig{
+		EdvHost: edvHost,
+		EdvRoot: currentDir,
 	}
 
 	// Setup router

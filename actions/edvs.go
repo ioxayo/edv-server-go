@@ -24,6 +24,7 @@ func UpdateEdvState(edvId string, docId string, operation string) {
 	if !common.IsValidEnumMember(EncryptedDocumentOperations, operation) {
 		return
 	}
+
 	// Retrieve and parse config
 	var edvConfig DataVaultConfiguration
 	configFileName := fmt.Sprintf("./edvs/%s/config.json", edvId)
@@ -169,12 +170,13 @@ func IndexToDocuments(edvId string, indexId string) []string {
 
 // Returns all document IDs for which condition is met for all key-value pairs of subfilter of given query operator
 func FetchMatchesAll(edvId string, indexId string, subfilter map[string]string, operator string) []string {
+	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
+		return make([]string, 0)
+	}
+
 	docIds := IndexToDocuments(edvId, indexId)
 	docMatches := make([]string, 0)
 
-	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
-		return docMatches
-	}
 	for _, docId := range docIds {
 		docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
 		if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {

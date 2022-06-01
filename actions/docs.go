@@ -51,23 +51,23 @@ func CreateDocument(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	edvId := mux.Vars(req)["edvId"]
-	edvDirName := fmt.Sprintf("./edvs/%s", edvId)
-	if _, err := os.Stat(edvDirName); goerrors.Is(err, os.ErrNotExist) {
-		message := fmt.Sprintf("Could not find EDV with ID '%s'", edvId)
-		status := http.StatusBadRequest
-		errors.HandleError(res, req, message, status)
-		return
-	}
-	docId := doc.Id
-	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
-	docFile, _ := os.Create(docFileName)
-	docFileBytes, _ := json.MarshalIndent(doc, "", "  ")
-	docFile.Write(docFileBytes)
-	UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Create)
-	UpdateEdvIndexCreate(edvId, doc)
+	// edvId := mux.Vars(req)["edvId"]
+	// edvDirName := fmt.Sprintf("./edvs/%s", edvId)
+	// if _, err := os.Stat(edvDirName); goerrors.Is(err, os.ErrNotExist) {
+	// 	message := fmt.Sprintf("Could not find EDV with ID '%s'", edvId)
+	// 	status := http.StatusBadRequest
+	// 	errors.HandleError(res, req, message, status)
+	// 	return
+	// }
+	// docId := doc.Id
+	// docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
+	// docFile, _ := os.Create(docFileName)
+	// docFileBytes, _ := json.MarshalIndent(doc, "", "  ")
+	// docFile.Write(docFileBytes)
+	// UpdateEdvState(edvId, docId, EncryptedDocumentOperations.Create)
+	// UpdateEdvIndexCreate(edvId, doc)
 
-	docLocation := fmt.Sprintf("%s/edvs/%s/docs/%s", req.Host, edvId, docId)
+	// docLocation := fmt.Sprintf("%s/edvs/%s/docs/%s", req.Host, edvId, docId)
 	res.Header().Add("Location", docLocation)
 	res.WriteHeader(http.StatusCreated)
 }
