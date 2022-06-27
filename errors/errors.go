@@ -29,5 +29,5 @@ func HandleError(res http.ResponseWriter, req *http.Request, message string, sta
 }
 
 func (err SimpleError) Error() string {
-	return fmt.Sprintf("%s error: %s", err.Status, err.Message)
+	return fmt.Sprintf("%d error: %s", err.Status, err.Message)
 }

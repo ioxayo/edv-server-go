@@ -10,8 +10,6 @@ import (
 	"github.com/ioxayo/edv-server-go/storage"
 )
 
-var Provider storage.StorageProvider
-
 // NewRouter function configures a new router to the API
 func NewRouter(routes Routes) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
@@ -38,10 +36,8 @@ func main() {
 	// TODO: setup switch statement for different storage provider types
 	edvHost := "http://localhost:5000"
 	currentDir, _ := os.Getwd()
-	Provider = storage.LocalStorageConfig{
-		EdvHost: edvHost,
-		EdvRoot: currentDir,
-	}
+	// storage.InitLocalStorageProvider(storage.Provider, edvHost, currentDir)
+	storage.Provider = storage.InitLocalStorageProvider(edvHost, currentDir)
 
 	// Setup router
 	router := NewRouter(routes)

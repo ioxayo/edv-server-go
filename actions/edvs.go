@@ -26,7 +26,7 @@ func UpdateEdvState(edvId string, docId string, operation string) {
 	}
 
 	// Retrieve and parse config
-	var edvConfig DataVaultConfiguration
+	var edvConfig common.DataVaultConfiguration
 	configFileName := fmt.Sprintf("./edvs/%s/config.json", edvId)
 	configFileBytes, _ := os.ReadFile(configFileName)
 	json.Unmarshal(configFileBytes, &edvConfig)
@@ -52,7 +52,7 @@ func UpdateEdvState(edvId string, docId string, operation string) {
 // Update EDV index for create operation
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
-func UpdateEdvIndexCreate(edvId string, doc EncryptedDocument) {
+func UpdateEdvIndexCreate(edvId string, doc common.EncryptedDocument) {
 	// Check if doc has index
 	if docIndex := doc.Indexed; docIndex != nil {
 		// Fetch index file
@@ -89,7 +89,7 @@ func UpdateEdvIndexCreate(edvId string, doc EncryptedDocument) {
 // Update EDV index for update operation
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
-func UpdateEdvIndexUpdate(edvId string, doc EncryptedDocument) {
+func UpdateEdvIndexUpdate(edvId string, doc common.EncryptedDocument) {
 	// Check if doc has index
 	if docIndex := doc.Indexed; docIndex != nil {
 		// Fetch index file
@@ -184,7 +184,7 @@ func FetchMatchesAll(edvId string, indexId string, subfilter map[string]string, 
 		}
 
 		docFileBytes, _ := os.ReadFile(docFileName)
-		var doc EncryptedDocument
+		var doc common.EncryptedDocument
 		if err := json.Unmarshal(docFileBytes, &doc); err != nil {
 			continue
 		}
@@ -255,7 +255,7 @@ func FetchMatchesAny(edvId string, indexId string, subfilters []map[string]strin
 
 // Create EDV
 func CreateEdv(res http.ResponseWriter, req *http.Request) {
-	var edvConfig DataVaultConfiguration
+	var edvConfig common.DataVaultConfiguration
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
 	bodyUnmarshalErr := json.Unmarshal(body, &edvConfig)
 

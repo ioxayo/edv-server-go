@@ -9,21 +9,24 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/ioxayo/edv-server-go/common"
 	"github.com/ioxayo/edv-server-go/errors"
+	"github.com/ioxayo/edv-server-go/storage"
 )
 
 // Get document by ID
-func GetDocumentById(edvId string, docId string) EncryptedDocument {
-	var doc EncryptedDocument
-	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
-	docFileBytes, _ := os.ReadFile(docFileName)
+func GetDocumentById(edvId string, docId string) common.EncryptedDocument {
+	var doc common.EncryptedDocument
+	// docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
+	// docFileBytes, _ := os.ReadFile(docFileName)
+	docFileBytes, _ := storage.Provider.ReadDocClient(edvId, docId)
 	json.Unmarshal(docFileBytes, &doc)
 	return doc
 }
 
 // Get documents by ID
-func GetDocumentsById(edvId string, docIds []string) []EncryptedDocument {
-	docs := make([]EncryptedDocument, 0)
+func GetDocumentsById(edvId string, docIds []string) []common.EncryptedDocument {
+	docs := make([]common.EncryptedDocument, 0)
 	for _, docId := range docIds {
 		doc := GetDocumentById(edvId, docId)
 		docs = append(docs, doc)
@@ -33,7 +36,7 @@ func GetDocumentsById(edvId string, docIds []string) []EncryptedDocument {
 
 // Create document
 func CreateDocument(res http.ResponseWriter, req *http.Request) {
-	var doc EncryptedDocument
+	var doc common.EncryptedDocument
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
 	bodyUnmarshalErr := json.Unmarshal(body, &doc)
 
@@ -92,7 +95,7 @@ func GetDocument(res http.ResponseWriter, req *http.Request) {
 
 // Update document
 func UpdateDocument(res http.ResponseWriter, req *http.Request) {
-	var doc EncryptedDocument
+	var doc common.EncryptedDocument
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
 	bodyUnmarshalErr := json.Unmarshal(body, &doc)
 

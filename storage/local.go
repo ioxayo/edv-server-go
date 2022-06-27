@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/ioxayo/edv-server-go/actions"
 	"github.com/ioxayo/edv-server-go/common"
 	"github.com/ioxayo/edv-server-go/errors"
 )
@@ -29,7 +28,15 @@ type LocalStorageConfig struct {
 	// DocDir  string // defaults to 'docs'
 }
 
-func (provider LocalStorageConfig) GetEdvDir(edvId string) (string, error) {
+func InitLocalStorageProvider(edvHost string, edvRoot string) StorageProvider {
+	config := LocalStorageConfig{
+		EdvHost: edvHost,
+		EdvRoot: edvRoot,
+	}
+	return &config
+}
+
+func (provider *LocalStorageConfig) GetEdvDir(edvId string) (string, error) {
 	edvDir := fmt.Sprintf("%s/%s/%s", provider.EdvRoot, EDV_DIR, edvId)
 	if _, err := os.Stat(edvDir); goerrors.Is(err, os.ErrNotExist) {
 		message := fmt.Sprintf("Could not find EDV with ID '%s'", edvId)
@@ -43,7 +50,7 @@ func (provider LocalStorageConfig) GetEdvDir(edvId string) (string, error) {
 	return edvDir, nil
 }
 
-func (provider LocalStorageConfig) GetDocDir(edvId string) (string, error) {
+func (provider *LocalStorageConfig) GetDocDir(edvId string) (string, error) {
 	edvDir, err := provider.GetEdvDir(edvId)
 	if err != nil {
 		return "", err
@@ -52,7 +59,7 @@ func (provider LocalStorageConfig) GetDocDir(edvId string) (string, error) {
 	return docDir, nil
 }
 
-func (provider LocalStorageConfig) GetDoc(edvId string, docId string) (string, error) {
+func (provider *LocalStorageConfig) GetDoc(edvId string, docId string) (string, error) {
 	edvDir, err := provider.GetEdvDir(edvId)
 	if err != nil {
 		return "", err
@@ -71,7 +78,7 @@ func (provider LocalStorageConfig) GetDoc(edvId string, docId string) (string, e
 	return docFileName, nil
 }
 
-func (provider LocalStorageConfig) GetSysFile(edvId string, fileType string) (string, error) {
+func (provider *LocalStorageConfig) GetSysFile(edvId string, fileType string) (string, error) {
 	if !common.IsValidEnumMember(SystemFiles, fileType) {
 		message := fmt.Sprintf("Invalid file type '%s'", fileType)
 		status := http.StatusBadRequest
@@ -98,8 +105,8 @@ func (provider LocalStorageConfig) GetSysFile(edvId string, fileType string) (st
 	return sysFile, nil
 }
 
-func (provider LocalStorageConfig) CreateEdv(edvId string, data []byte) (string, error) {
-	var edvConfig actions.DataVaultConfiguration
+func (provider *LocalStorageConfig) CreateEdv(edvId string, data []byte) (string, error) {
+	var edvConfig common.DataVaultConfiguration
 
 	if edvConfig.Id != "" {
 		edvId = edvConfig.Id
@@ -130,8 +137,8 @@ func (provider LocalStorageConfig) CreateEdv(edvId string, data []byte) (string,
 	return edvLocation, nil
 }
 
-func (provider LocalStorageConfig) CreateDocClient(edvId string, docId string, data []byte) (string, error) {
-	var doc actions.EncryptedDocument
+func (provider *LocalStorageConfig) CreateDocClient(edvId string, docId string, data []byte) (string, error) {
+	var doc common.EncryptedDocument
 	json.Unmarshal(data, &doc)
 
 	docFileName, err := provider.GetDoc(edvId, docId)
@@ -148,7 +155,7 @@ func (provider LocalStorageConfig) CreateDocClient(edvId string, docId string, d
 	return docLocation, nil
 }
 
-func (provider LocalStorageConfig) CreateDocSystem(edvId string, fileType string, data []byte) error {
+func (provider *LocalStorageConfig) CreateDocSystem(edvId string, fileType string, data []byte) error {
 	if !common.IsValidEnumMember(SystemFiles, fileType) {
 		message := fmt.Sprintf("Invalid file type '%s'", fileType)
 		status := http.StatusBadRequest
@@ -166,7 +173,7 @@ func (provider LocalStorageConfig) CreateDocSystem(edvId string, fileType string
 
 	switch fileType {
 	case SystemFiles.Config:
-		var edvConfig actions.DataVaultConfiguration
+		var edvConfig common.DataVaultConfiguration
 		json.Unmarshal(data, &edvConfig)
 		configFileName := fmt.Sprintf("%s/config.json", edvDir)
 		configFile, _ := os.Create(configFileName)
@@ -186,7 +193,7 @@ func (provider LocalStorageConfig) CreateDocSystem(edvId string, fileType string
 	return nil
 }
 
-func (provider LocalStorageConfig) ReadDocClient(edvId string, docId string) ([]byte, error) {
+func (provider *LocalStorageConfig) ReadDocClient(edvId string, docId string) ([]byte, error) {
 	docFileName, err := provider.GetDoc(edvId, docId)
 	if err != nil {
 		return make([]byte, 0), err
@@ -207,7 +214,7 @@ func (provider LocalStorageConfig) ReadDocClient(edvId string, docId string) ([]
 	return docFileBytes, nil
 }
 
-func (provider LocalStorageConfig) ReadDocSystem(edvId string, fileType string) ([]byte, error) {
+func (provider *LocalStorageConfig) ReadDocSystem(edvId string, fileType string) ([]byte, error) {
 	if !common.IsValidEnumMember(SystemFiles, fileType) {
 		message := fmt.Sprintf("Invalid file type '%s'", fileType)
 		status := http.StatusBadRequest
@@ -239,8 +246,8 @@ func (provider LocalStorageConfig) ReadDocSystem(edvId string, fileType string) 
 	return fileBytes, nil
 }
 
-func (provider LocalStorageConfig) UpdateDocClient(edvId string, docId string, data []byte) error {
-	var doc actions.EncryptedDocument
+func (provider *LocalStorageConfig) UpdateDocClient(edvId string, docId string, data []byte) error {
+	var doc common.EncryptedDocument
 	json.Unmarshal(data, &doc)
 
 	docFileName, err := provider.GetDoc(edvId, docId)
@@ -255,7 +262,7 @@ func (provider LocalStorageConfig) UpdateDocClient(edvId string, docId string, d
 	return nil
 }
 
-func (provider LocalStorageConfig) UpdateDocSystem(edvId string, fileType string, data []byte) error {
+func (provider *LocalStorageConfig) UpdateDocSystem(edvId string, fileType string, data []byte) error {
 	if !common.IsValidEnumMember(SystemFiles, fileType) {
 		message := fmt.Sprintf("Invalid file type '%s'", fileType)
 		status := http.StatusBadRequest
@@ -285,7 +292,7 @@ func (provider LocalStorageConfig) UpdateDocSystem(edvId string, fileType string
 	return nil
 }
 
-func (provider LocalStorageConfig) DeleteDocClient(edvId string, docId string) error {
+func (provider *LocalStorageConfig) DeleteDocClient(edvId string, docId string) error {
 	docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
 	if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
 		message := fmt.Sprintf("Could not find document with ID '%s' in EDV with ID '%s'", docId, edvId)
@@ -302,7 +309,7 @@ func (provider LocalStorageConfig) DeleteDocClient(edvId string, docId string) e
 	return nil
 }
 
-func (provider LocalStorageConfig) DeleteDocSystem(edvId string, fileType string) error {
+func (provider *LocalStorageConfig) DeleteDocSystem(edvId string, fileType string) error {
 	if !common.IsValidEnumMember(SystemFiles, fileType) {
 		message := fmt.Sprintf("Invalid file type '%s'", fileType)
 		status := http.StatusBadRequest
