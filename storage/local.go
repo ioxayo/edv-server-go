@@ -120,7 +120,7 @@ func (provider *LocalStorageConfig) CreateEdv(data []byte) (string, errors.HttpE
 	}
 	edvConfig.Id = edvId
 
-	docDir, _ := provider.GetDocDir(edvId)
+	docDir := fmt.Sprintf("%s/%s/%s/%s", provider.EdvRoot, EDV_DIR, edvId, DOC_DIR)
 	os.MkdirAll(docDir, os.ModePerm)
 
 	configFileName, _ := provider.GetSysFile(edvId, SystemFiles.Config)
