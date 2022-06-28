@@ -1,16 +1,19 @@
 package storage
 
+import "github.com/ioxayo/edv-server-go/errors"
+
 // Storage provider structure
 type StorageProvider interface {
-	CreateEdv(edvId string, data []byte) (string, error)
-	CreateDocClient(edvId string, docId string, data []byte) (string, error)
-	CreateDocSystem(edvId string, fileType string, data []byte) error
-	ReadDocClient(edvId string, docId string) ([]byte, error)
-	ReadDocSystem(edvId string, fileType string) ([]byte, error)
-	UpdateDocClient(edvId string, docId string, data []byte) error
-	UpdateDocSystem(edvId string, fileType string, data []byte) error
-	DeleteDocClient(edvId string, docId string) error
-	DeleteDocSystem(edvId string, fileType string) error
+	CreateEdv(data []byte) (string, errors.HttpError)
+	CreateDocClient(edvId string, docId string, data []byte) (string, errors.HttpError)
+	CreateDocSystem(edvId string, fileType string, data []byte) errors.HttpError
+	ReadDocClient(edvId string, docId string) ([]byte, errors.HttpError)
+	ReadDocSystem(edvId string, fileType string) ([]byte, errors.HttpError)
+	UpdateDocClient(edvId string, docId string, data []byte) errors.HttpError
+	UpdateDocSystem(edvId string, fileType string, data []byte) errors.HttpError
+	DeleteDocClient(edvId string, docId string) errors.HttpError
+	DeleteDocSystem(edvId string, fileType string) errors.HttpError
+	DocExistsClient(edvId string, docId string) (bool, errors.HttpError)
 }
 
 // System file types

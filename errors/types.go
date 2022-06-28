@@ -10,7 +10,7 @@ type ErrorLogEntry struct {
 }
 
 // Simple error structure for resource operations
-type SimpleError struct {
+type HttpError struct {
 	Message string
 	Status  int
 }
