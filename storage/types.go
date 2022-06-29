@@ -4,7 +4,7 @@ import "github.com/ioxayo/edv-server-go/errors"
 
 // Storage provider structure
 type StorageProvider interface {
-	CreateEdv(data []byte) (string, errors.HttpError)
+	// CreateEdv(data []byte) (string, errors.HttpError)
 	CreateDocClient(edvId string, docId string, data []byte) (string, errors.HttpError)
 	CreateDocSystem(edvId string, fileType string, data []byte) errors.HttpError
 	ReadDocClient(edvId string, docId string) ([]byte, errors.HttpError)
@@ -21,6 +21,7 @@ type SystemFileOptions struct {
 	Config  string
 	History string
 	Index   string
+	Storage string
 }
 
 var (
@@ -28,9 +29,21 @@ var (
 		Config:  "config",
 		History: "history",
 		Index:   "index",
+		Storage: "storage",
 	}
 )
 
 func (enumStruct SystemFileOptions) IsEnum() bool {
 	return true
 }
+
+// Storage provider types
+type StorageProviderTypeOptions struct {
+	Local string
+}
+
+var (
+	StorageProviderTypes = StorageProviderTypeOptions{
+		Local: "local",
+	}
+)

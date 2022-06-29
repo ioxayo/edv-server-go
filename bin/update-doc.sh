@@ -8,8 +8,34 @@ curl -v \
 -X POST http://localhost:$EDV_PORT/edvs/$EDV_ID/docs/$DOC_ID \
 -d @- << DATA
 {
-  "id": "94684128-c42c-4b28-adb0-aec77bf76044",
+  "id": "cc34bc28-f7cf-11ec-a1a2-784f43a5dedc",
   "sequence": 1,
+  "indexed": [
+    {
+      "sequence": 1,
+      "hmac": {
+        "id": "https://example.com/kms/z7BgF536GaR",
+        "type": "Sha256HmacKey2019"
+      },
+      "attributes": [
+        {
+          "name": "DUQaxPtSLtd8L3WBAIkJ4DiVJeqoF6bdnhR7lSaPloZ",
+          "value": "RV58Va4904K-18_L5g_vfARXRWEB00knFSGPpukUBro",
+          "unique": true
+        },
+        {
+          "name": "CUQaxPtSLtd8L3WBAIkJ4DiVJeqoF6bdnhR7lSaPloZ",
+          "value": "QV58Va4904K-18_L5g_vfARXRWEB00knFSGPpukUBro",
+          "unique": false
+        },
+        {
+          "name": "NewIndexName",
+          "value": "NewIndexValue",
+          "unique": true
+        }
+      ]
+    }
+  ],
   "jwe": {
     "protected": "eyJlbmMiOiJDMjBQIn0",
     "recipients": [

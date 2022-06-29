@@ -7,7 +7,7 @@ curl -v \
 -X POST http://localhost:$EDV_PORT/edvs/$EDV_ID/docs \
 -d @- << DATA
 {
-  "id": "51686fbc-cc46-11ec-9940-784f43a5dedc",
+  "id": "cc34bc28-f7cf-11ec-a1a2-784f43a5dedc",
   "sequence": 0,
   "indexed": [
     {

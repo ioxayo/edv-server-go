@@ -42,3 +42,18 @@ type EncryptedDocument struct {
 		} `json:"attributes"`
 	} `json:"indexed,omitempty"`
 }
+
+// Environment variables
+type EnvVarOptions struct {
+	Host             string
+	StorageType      string
+	StorageLocalRoot string
+}
+
+var (
+	EnvVars = EnvVarOptions{
+		Host:             "HOST",
+		StorageType:      "STORAGE_TYPE",
+		StorageLocalRoot: "STORAGE_LOCAL_ROOT",
+	}
+)

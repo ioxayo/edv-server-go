@@ -15,9 +15,8 @@ import (
 // Get document by ID
 func GetDocumentById(edvId string, docId string) common.EncryptedDocument {
 	var doc common.EncryptedDocument
-	// docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
-	// docFileBytes, _ := os.ReadFile(docFileName)
-	docFileBytes, _ := storage.Provider.ReadDocClient(edvId, docId)
+	provider, _ := storage.GetStorageProvider(edvId)
+	docFileBytes, _ := provider.ReadDocClient(edvId, docId)
 	json.Unmarshal(docFileBytes, &doc)
 	return doc
 }
@@ -36,6 +35,7 @@ func GetDocumentsById(edvId string, docIds []string) []common.EncryptedDocument 
 func CreateDocument(res http.ResponseWriter, req *http.Request) {
 	var doc common.EncryptedDocument
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
+	json.Unmarshal(body, &doc)
 
 	if bodyReadErr != nil {
 		message := fmt.Sprintf("Error parsing request body: %v", bodyReadErr)
@@ -46,9 +46,9 @@ func CreateDocument(res http.ResponseWriter, req *http.Request) {
 
 	edvId := mux.Vars(req)["edvId"]
 	docId := doc.Id
+	provider, _ := storage.GetStorageProvider(edvId)
 
-	// docLocation := fmt.Sprintf("%s/edvs/%s/docs/%s", req.Host, edvId, docId)
-	docLocation, createDocErr := storage.Provider.CreateDocClient(edvId, docId, body)
+	docLocation, createDocErr := provider.CreateDocClient(edvId, docId, body)
 	if createDocErr.IsError() {
 		message := createDocErr.Message
 		status := createDocErr.Status
@@ -70,15 +70,8 @@ func GetDocuments(res http.ResponseWriter, req *http.Request) {}
 func GetDocument(res http.ResponseWriter, req *http.Request) {
 	edvId := mux.Vars(req)["edvId"]
 	docId := mux.Vars(req)["docId"]
-	// docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
-	// if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
-	// 	message := fmt.Sprintf("Could not find document with ID '%s' in EDV with ID '%s'", docId, edvId)
-	// 	status := http.StatusNotFound
-	// 	errors.HandleError(res, req, message, status)
-	// 	return
-	// }
-	// docFileBytes, _ := os.ReadFile(docFileName)
-	docFileBytes, getDocErr := storage.Provider.ReadDocClient(edvId, docId)
+	provider, _ := storage.GetStorageProvider(edvId)
+	docFileBytes, getDocErr := provider.ReadDocClient(edvId, docId)
 	if getDocErr.IsError() {
 		message := getDocErr.Message
 		status := getDocErr.Status
@@ -93,6 +86,7 @@ func GetDocument(res http.ResponseWriter, req *http.Request) {
 func UpdateDocument(res http.ResponseWriter, req *http.Request) {
 	var doc common.EncryptedDocument
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
+	json.Unmarshal(body, &doc)
 
 	if bodyReadErr != nil {
 		message := fmt.Sprintf("Error parsing request body: %v", bodyReadErr)
@@ -103,19 +97,9 @@ func UpdateDocument(res http.ResponseWriter, req *http.Request) {
 
 	edvId := mux.Vars(req)["edvId"]
 	docId := mux.Vars(req)["docId"]
+	provider, _ := storage.GetStorageProvider(edvId)
 
-	// docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
-	// if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
-	// 	message := fmt.Sprintf("Could not find document with ID '%s' in EDV with ID '%s'", docId, edvId)
-	// 	status := http.StatusBadRequest
-	// 	errors.HandleError(res, req, message, status)
-	// 	return
-	// }
-	// docFile, _ := os.Create(docFileName)
-	// docFileBytes, _ := json.MarshalIndent(doc, "", "  ")
-	// docFile.Write(docFileBytes)
-
-	updateDocErr := storage.Provider.UpdateDocClient(edvId, docId, body)
+	updateDocErr := provider.UpdateDocClient(edvId, docId, body)
 	if updateDocErr.IsError() {
 		message := updateDocErr.Message
 		status := updateDocErr.Status
@@ -131,16 +115,9 @@ func UpdateDocument(res http.ResponseWriter, req *http.Request) {
 func DeleteDocument(res http.ResponseWriter, req *http.Request) {
 	edvId := mux.Vars(req)["edvId"]
 	docId := mux.Vars(req)["docId"]
-	// docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
-	// if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
-	// 	message := fmt.Sprintf("Could not find document with ID '%s' in EDV with ID '%s'", docId, edvId)
-	// 	status := http.StatusNotFound
-	// 	errors.HandleError(res, req, message, status)
-	// 	return
-	// }
-	// os.Remove(docFileName)
+	provider, _ := storage.GetStorageProvider(edvId)
 
-	deleteDocErr := storage.Provider.DeleteDocClient(edvId, docId)
+	deleteDocErr := provider.DeleteDocClient(edvId, docId)
 	if deleteDocErr.IsError() {
 		message := deleteDocErr.Message
 		status := deleteDocErr.Status
