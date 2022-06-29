@@ -8,3 +8,9 @@ type ErrorLogEntry struct {
 	Message string
 	Status  int
 }
+
+// Simple error structure for resource operations
+type HttpError struct {
+	Message string
+	Status  int
+}

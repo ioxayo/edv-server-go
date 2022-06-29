@@ -2,62 +2,77 @@ package actions
 
 import (
 	"encoding/json"
-	goerrors "errors"
 	"fmt"
 	"io/ioutil"
 	"math"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/ioxayo/edv-server-go/common"
 	"github.com/ioxayo/edv-server-go/errors"
+	"github.com/ioxayo/edv-server-go/storage"
 )
 
 // Update state of EDV
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
-func UpdateEdvState(edvId string, docId string, operation string) {
+func UpdateEdvState(edvId string, docId string, operation string) errors.HttpError {
 	if !common.IsValidEnumMember(EncryptedDocumentOperations, operation) {
-		return
+		return errors.NilError()
 	}
+
+	// Retrieve storage provider
+	provider, _ := storage.GetStorageProvider(edvId)
+
 	// Retrieve and parse config
-	var edvConfig DataVaultConfiguration
-	configFileName := fmt.Sprintf("./edvs/%s/config.json", edvId)
-	configFileBytes, _ := os.ReadFile(configFileName)
-	json.Unmarshal(configFileBytes, &edvConfig)
+	var config common.DataVaultConfiguration
+	configFileBytes, _ := provider.ReadDocSystem(edvId, storage.SystemFiles.Config)
+	json.Unmarshal(configFileBytes, &config)
 
 	// Retrieve and parse history
-	var historyEntries []EdvHistoryLogEntry
-	historyFileName := fmt.Sprintf("./edvs/%s/history.json", edvId)
-	historyFileBytes, _ := os.ReadFile(historyFileName)
-	json.Unmarshal(historyFileBytes, &historyEntries)
+	var history []EdvHistoryLogEntry
+	historyFileBytes, _ := provider.ReadDocSystem(edvId, storage.SystemFiles.History)
+	json.Unmarshal(historyFileBytes, &history)
 
-	// Update parsed config and history
-	edvConfig.Sequence++
-	historyEntry := EdvHistoryLogEntry{docId, edvConfig.Sequence, operation}
-	historyEntries = append(historyEntries, historyEntry)
-	historyFileBytes, _ = json.MarshalIndent(historyEntries, "", "  ")
-	configFileBytes, _ = json.MarshalIndent(edvConfig, "", "  ")
+	// Update parsed config
+	config.Sequence++
+	configFileBytes, _ = json.MarshalIndent(config, "", "  ")
 
-	// Persist updated config and history
-	os.WriteFile(configFileName, configFileBytes, os.ModePerm)
-	os.WriteFile(historyFileName, historyFileBytes, os.ModePerm)
+	// Update parsed history
+	historyEntry := EdvHistoryLogEntry{docId, config.Sequence, operation}
+	history = append(history, historyEntry)
+	historyFileBytes, _ = json.MarshalIndent(history, "", "  ")
+
+	// Persist updated config
+	updateConfigErr := provider.UpdateDocSystem(edvId, storage.SystemFiles.Config, configFileBytes)
+	if updateConfigErr.IsError() {
+		return updateConfigErr
+	}
+
+	// Persist updated history
+	updateHistoryErr := provider.UpdateDocSystem(edvId, storage.SystemFiles.History, historyFileBytes)
+	if updateHistoryErr.IsError() {
+		return updateHistoryErr
+	}
+
+	return errors.NilError()
 }
 
 // Update EDV index for create operation
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
-func UpdateEdvIndexCreate(edvId string, doc EncryptedDocument) {
+func UpdateEdvIndexCreate(edvId string, doc common.EncryptedDocument) errors.HttpError {
 	// Check if doc has index
 	if docIndex := doc.Indexed; docIndex != nil {
+		// Retrieve storage provider
+		provider, _ := storage.GetStorageProvider(edvId)
+
 		// Fetch index file
 		var edvIndex EncryptedIndex
-		edvIndexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
-		edvIndexFileBytesBefore, _ := os.ReadFile(edvIndexFileName)
+		edvIndexFileBytesBefore, _ := provider.ReadDocSystem(edvId, storage.SystemFiles.Index)
 		json.Unmarshal(edvIndexFileBytesBefore, &edvIndex)
 
 		// Iterate through all doc indexes
@@ -81,20 +96,23 @@ func UpdateEdvIndexCreate(edvId string, doc EncryptedDocument) {
 
 		// Update index file
 		edvIndexFileBytesAfter, _ := json.MarshalIndent(edvIndex, "", "  ")
-		os.WriteFile(edvIndexFileName, edvIndexFileBytesAfter, os.ModePerm)
+		return provider.UpdateDocSystem(edvId, storage.SystemFiles.Index, edvIndexFileBytesAfter)
 	}
+	return errors.NilError()
 }
 
 // Update EDV index for update operation
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
-func UpdateEdvIndexUpdate(edvId string, doc EncryptedDocument) {
+func UpdateEdvIndexUpdate(edvId string, doc common.EncryptedDocument) errors.HttpError {
 	// Check if doc has index
 	if docIndex := doc.Indexed; docIndex != nil {
+		// Retrieve storage provider
+		provider, _ := storage.GetStorageProvider(edvId)
+
 		// Fetch index file
 		var edvIndex EncryptedIndex
-		edvIndexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
-		edvIndexFileBytesBefore, _ := os.ReadFile(edvIndexFileName)
+		edvIndexFileBytesBefore, _ := provider.ReadDocSystem(edvId, storage.SystemFiles.Index)
 		json.Unmarshal(edvIndexFileBytesBefore, &edvIndex)
 
 		// Iterate through all doc indexes
@@ -126,18 +144,21 @@ func UpdateEdvIndexUpdate(edvId string, doc EncryptedDocument) {
 
 		// Update index file
 		edvIndexFileBytesAfter, _ := json.MarshalIndent(edvIndex, "", "  ")
-		os.WriteFile(edvIndexFileName, edvIndexFileBytesAfter, os.ModePerm)
+		return provider.UpdateDocSystem(edvId, storage.SystemFiles.Index, edvIndexFileBytesAfter)
 	}
+	return errors.NilError()
 }
 
 // Update EDV index for delete operation
 // TODO: may need to add global locking around this function to
 // avoid inconsistent state from concurrent client updates
-func UpdateEdvIndexDelete(edvId string, docId string) {
+func UpdateEdvIndexDelete(edvId string, docId string) errors.HttpError {
+	// Retrieve storage provider
+	provider, _ := storage.GetStorageProvider(edvId)
+
 	// Fetch index file
 	var edvIndex EncryptedIndex
-	edvIndexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
-	edvIndexFileBytesBefore, _ := os.ReadFile(edvIndexFileName)
+	edvIndexFileBytesBefore, _ := provider.ReadDocSystem(edvId, storage.SystemFiles.Index)
 	json.Unmarshal(edvIndexFileBytesBefore, &edvIndex)
 
 	// Retrieve index array for doc ID
@@ -155,34 +176,36 @@ func UpdateEdvIndexDelete(edvId string, docId string) {
 
 	// Update index file
 	edvIndexFileBytesAfter, _ := json.MarshalIndent(edvIndex, "", "  ")
-	os.WriteFile(edvIndexFileName, edvIndexFileBytesAfter, os.ModePerm)
+	return provider.UpdateDocSystem(edvId, storage.SystemFiles.Index, edvIndexFileBytesAfter)
 }
 
 // Retrieve document IDs associated with an index ID
 func IndexToDocuments(edvId string, indexId string) []string {
 	var index EncryptedIndex
-	indexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
-	indexFileBytes, _ := os.ReadFile(indexFileName)
+	provider, _ := storage.GetStorageProvider(edvId)
+	indexFileBytes, _ := provider.ReadDocSystem(edvId, storage.SystemFiles.Index)
 	json.Unmarshal(indexFileBytes, &index)
 	return index.DocIds[indexId]
 }
 
 // Returns all document IDs for which condition is met for all key-value pairs of subfilter of given query operator
 func FetchMatchesAll(edvId string, indexId string, subfilter map[string]string, operator string) []string {
+	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
+		return make([]string, 0)
+	}
+
 	docIds := IndexToDocuments(edvId, indexId)
 	docMatches := make([]string, 0)
 
-	if !common.IsValidEnumMember(EdvSearchOperators, operator) {
-		return docMatches
-	}
+	provider, _ := storage.GetStorageProvider(edvId)
+
 	for _, docId := range docIds {
-		docFileName := fmt.Sprintf("./edvs/%s/docs/%s.json", edvId, docId)
-		if _, err := os.Stat(docFileName); goerrors.Is(err, os.ErrNotExist) {
+		if docExists, _ := provider.DocExistsClient(edvId, docId); !docExists {
 			continue
 		}
 
-		docFileBytes, _ := os.ReadFile(docFileName)
-		var doc EncryptedDocument
+		docFileBytes, _ := provider.ReadDocClient(edvId, docId)
+		var doc common.EncryptedDocument
 		if err := json.Unmarshal(docFileBytes, &doc); err != nil {
 			continue
 		}
@@ -253,7 +276,7 @@ func FetchMatchesAny(edvId string, indexId string, subfilters []map[string]strin
 
 // Create EDV
 func CreateEdv(res http.ResponseWriter, req *http.Request) {
-	var edvConfig DataVaultConfiguration
+	var edvConfig common.DataVaultConfiguration
 	body, bodyReadErr := ioutil.ReadAll(req.Body)
 	bodyUnmarshalErr := json.Unmarshal(body, &edvConfig)
 
@@ -279,26 +302,40 @@ func CreateEdv(res http.ResponseWriter, req *http.Request) {
 	}
 	edvConfig.Id = edvId
 
-	edvDirName := filepath.Join(".", "edvs", edvId)
-	docDirName := filepath.Join(edvDirName, "docs")
-	os.MkdirAll(docDirName, os.ModePerm)
+	// Setup storage provider
+	var provider storage.StorageProvider
+	switch os.Getenv(common.EnvVars.StorageType) {
+	case storage.StorageProviderTypes.Local:
+	default:
+		var edvRoot string
+		if edvRootEnvVal, edvRootEnvExists := os.LookupEnv(common.EnvVars.StorageLocalRoot); edvRootEnvExists {
+			edvRoot = edvRootEnvVal
+		} else {
+			edvRoot, _ = os.Getwd()
+		}
+		provider = storage.InitLocalStorageProvider(edvRoot, edvId)
+	}
 
-	configFileName := fmt.Sprintf("./edvs/%s/config.json", edvId)
-	configFile, _ := os.Create(configFileName)
 	configFileBytes, _ := json.MarshalIndent(edvConfig, "", "  ")
-	configFile.Write(configFileBytes)
+	provider.CreateDocSystem(edvId, storage.SystemFiles.Config, configFileBytes)
 
-	historyFileName := fmt.Sprintf("./edvs/%s/history.json", edvId)
-	historyFile, _ := os.Create(historyFileName)
-	historyFileString := "[]"
-	historyFile.WriteString(historyFileString)
+	historyFileBytes := []byte("[]")
+	provider.CreateDocSystem(edvId, storage.SystemFiles.History, historyFileBytes)
 
-	indexFileName := fmt.Sprintf("./edvs/%s/index.json", edvId)
-	indexFile, _ := os.Create(indexFileName)
-	indexFileString := "{\n  \"docIds\": {},\n  \"indexIds\": {}\n}"
-	indexFile.WriteString(indexFileString)
+	indexFileBytes := []byte("{\n  \"docIds\": {},\n  \"indexIds\": {}\n}")
+	provider.CreateDocSystem(edvId, storage.SystemFiles.Index, indexFileBytes)
 
-	edvLocation := fmt.Sprintf("%s/edvs/%s", req.Host, edvId)
+	storageFileBytes, _ := json.MarshalIndent(provider, "", "  ")
+	provider.CreateDocSystem(edvId, storage.SystemFiles.Storage, storageFileBytes)
+
+	var edvHost string
+	if edvHostEnvVal, edvHostEnvExists := os.LookupEnv(common.EnvVars.Host); edvHostEnvExists {
+		edvHost = edvHostEnvVal
+	} else {
+		edvHost = "http://localhost:5000"
+	}
+
+	edvLocation := fmt.Sprintf("%s/%s/%s", edvHost, storage.EDV_DIR, edvId)
 	res.Header().Add("Location", edvLocation)
 	res.WriteHeader(http.StatusCreated)
 }
@@ -311,8 +348,8 @@ func GetEdv(res http.ResponseWriter, req *http.Request) {}
 
 // Get history of EDV
 func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
-	var historyEntries []EdvHistoryLogEntry
-	var historyEntriesFiltered []EdvHistoryLogEntry
+	var history []EdvHistoryLogEntry
+	var historyFiltered []EdvHistoryLogEntry
 
 	afterSequenceString := req.URL.Query().Get("afterSequence")
 	beforeSequenceString := req.URL.Query().Get("beforeSequence")
@@ -320,9 +357,9 @@ func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
 	var beforeSequence uint64
 
 	edvId := mux.Vars(req)["edvId"]
-	historyFileName := fmt.Sprintf("./edvs/%s/history.json", edvId)
-	historyFileBytes, _ := os.ReadFile(historyFileName)
-	json.Unmarshal(historyFileBytes, &historyEntries)
+	provider, _ := storage.GetStorageProvider(edvId)
+	historyFileBytes, _ := provider.ReadDocSystem(edvId, storage.SystemFiles.History)
+	json.Unmarshal(historyFileBytes, &history)
 
 	if afterSequenceString != "" {
 		afterSequence, _ = strconv.ParseUint(afterSequenceString, 10, 64)
@@ -335,12 +372,12 @@ func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
 		beforeSequence = math.MaxUint64
 	}
 
-	for _, entry := range historyEntries {
+	for _, entry := range history {
 		if entry.Sequence > afterSequence && entry.Sequence < beforeSequence {
-			historyEntriesFiltered = append(historyEntriesFiltered, entry)
+			historyFiltered = append(historyFiltered, entry)
 		}
 	}
-	historyFileBytesFiltered, _ := json.MarshalIndent(historyEntriesFiltered, "", "  ")
+	historyFileBytesFiltered, _ := json.MarshalIndent(historyFiltered, "", "  ")
 	res.Write(historyFileBytesFiltered)
 }
 

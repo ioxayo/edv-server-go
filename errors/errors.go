@@ -2,11 +2,11 @@ package errors
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/ioxayo/edv-server-go/common"
 )
 
 func LogError(req *http.Request, message string, status int) {
@@ -23,6 +23,18 @@ func LogError(req *http.Request, message string, status int) {
 func HandleError(res http.ResponseWriter, req *http.Request, message string, status int) {
 	LogError(req, message, status)
 	res.WriteHeader(status)
-	resBytes, _ := json.Marshal(common.GenericResponse{message, false})
+	resBytes, _ := json.Marshal(HttpError{message, status})
 	res.Write(resBytes)
+}
+
+func NilError() HttpError {
+	return HttpError{Message: "", Status: http.StatusOK}
+}
+
+func (err HttpError) IsError() bool {
+	return err.Status >= 400
+}
+
+func (err HttpError) Error() string {
+	return fmt.Sprintf("%d error: %s", err.Status, err.Message)
 }
