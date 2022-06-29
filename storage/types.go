@@ -4,7 +4,6 @@ import "github.com/ioxayo/edv-server-go/errors"
 
 // Storage provider structure
 type StorageProvider interface {
-	// CreateEdv(data []byte) (string, errors.HttpError)
 	CreateDocClient(edvId string, docId string, data []byte) (string, errors.HttpError)
 	CreateDocSystem(edvId string, fileType string, data []byte) errors.HttpError
 	ReadDocClient(edvId string, docId string) ([]byte, errors.HttpError)
