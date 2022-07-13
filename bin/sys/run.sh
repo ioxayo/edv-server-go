@@ -4,7 +4,7 @@ export PORT=5000
 
 # Run server locally
 runLocal() {
-  ./bin/sys/exit.sh
+  ./bin/sys/exit.sh -l
   echo Building EDV server...
   go build
   echo Running EDV server...
@@ -15,7 +15,7 @@ runLocal() {
 
 # Run server in Docker
 runDocker() {
-  ./bin/sys/exit.sh
+  ./bin/sys/exit.sh -d
   docker build --tag edv-server-go .
   docker run -p $PORT:$PORT edv-server-go
 }
