@@ -4,7 +4,7 @@ EDV_ID=$1
 
 curl -v \
 -H "Content-Type: application/json; charset=utf-8" \
--X POST http://localhost:$EDV_PORT/edvs/$EDV_ID/docs \
+-X POST http://localhost:5000/edvs/$EDV_ID/docs \
 -d @- << DATA
 {
   "id": "cc34bc28-f7cf-11ec-a1a2-784f43a5dedc",

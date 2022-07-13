@@ -17,7 +17,7 @@ done
 
 curl -v \
 -H "Content-Type: application/json; charset=utf-8" \
--X POST http://localhost:$EDV_PORT/edvs/$EDV_ID/query \
+-X POST http://localhost:5000/edvs/$EDV_ID/query \
 -d @- << DATA
 {
   "index": "https://example.com/kms/z7BgF536GaR",

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/ioxayo/edv-server-go/common"
 )
 
 // NewRouter function configures a new router to the API
@@ -24,10 +26,12 @@ func NewRouter(routes Routes) *mux.Router {
 }
 
 func main() {
-	// Access $EDV_PORT env var
-	port := os.Getenv("EDV_PORT")
+	// Access $PORT env var
+	portVarName := common.EnvVars.Port
+	port := os.Getenv(portVarName)
 	if port == "" {
-		log.Fatal("$EDV_PORT must be set")
+		errorMessage := fmt.Sprintf("$%s must be set", portVarName)
+		log.Fatal(errorMessage)
 	}
 
 	// Setup router

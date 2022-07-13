@@ -2,7 +2,7 @@
 
 curl -v \
 -H "Content-Type: application/json; charset=utf-8" \
--X POST http://localhost:$EDV_PORT/edvs \
+-X POST http://localhost:5000/edvs \
 -d @- << DATA
 {
   "sequence": 0,

@@ -17,4 +17,4 @@ done
 
 curl -v \
 -H "Accept: application/json; charset=utf-8" \
--X GET http://localhost:$EDV_PORT/edvs/$EDV_ID/history?afterSequence=${AFTER_SEQ}\&beforeSequence=${BEFORE_SEQ}
+-X GET http://localhost:5000/edvs/$EDV_ID/history?afterSequence=${AFTER_SEQ}\&beforeSequence=${BEFORE_SEQ}

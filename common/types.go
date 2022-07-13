@@ -46,6 +46,7 @@ type EncryptedDocument struct {
 // Environment variables
 type EnvVarOptions struct {
 	Host             string
+	Port             string
 	StorageType      string
 	StorageLocalRoot string
 }
@@ -53,6 +54,7 @@ type EnvVarOptions struct {
 var (
 	EnvVars = EnvVarOptions{
 		Host:             "HOST",
+		Port:             "PORT",
 		StorageType:      "STORAGE_TYPE",
 		StorageLocalRoot: "STORAGE_LOCAL_ROOT",
 	}
