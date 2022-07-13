@@ -30,8 +30,8 @@ We respect that EDV providers may wish to configure the API service independent 
 
 ## Run
 We have provided two commands to run the EDV server:
-1. Local: `source bin/sys/run.sh`
-2. Prodcution: 
+1. Local: `./bin/sys/run.sh -l`
+2. Docker: `./bin/sys/run.sh -d`
 
 ## Test
 We have provided two ways to test the functionality of the EDV server:
