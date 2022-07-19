@@ -37,3 +37,8 @@ We have provided two commands to run the EDV server:
 We have provided two ways to test the functionality of the EDV server:
 1. Sample scripts in the `bin` folder (note relevant command-line inputs)
 2. [`TODO`] Unit tests in the `test` folder
+
+## Contributions
+To make a contribution, please do one of the following:
+- For code, submit a pull request against this repo via a fork or branch
+- For questions, recommendations, and bug reports, create an issue in this repo
