@@ -33,7 +33,7 @@ func UpdateEdvState(edvId string, docId string, operation string) errors.HttpErr
 	json.Unmarshal(configFileBytes, &config)
 
 	// Retrieve and parse history
-	var history []EdvHistoryLogEntry
+	history := make([]EdvHistoryLogEntry, 0)
 	historyFileBytes, _ := provider.ReadDocSystem(edvId, storage.SystemFiles.History)
 	json.Unmarshal(historyFileBytes, &history)
 
@@ -348,8 +348,8 @@ func GetEdv(res http.ResponseWriter, req *http.Request) {}
 
 // Get history of EDV
 func GetEdvHistory(res http.ResponseWriter, req *http.Request) {
-	var history []EdvHistoryLogEntry
-	var historyFiltered []EdvHistoryLogEntry
+	history := make([]EdvHistoryLogEntry, 0)
+	historyFiltered := make([]EdvHistoryLogEntry, 0)
 
 	afterSequenceString := req.URL.Query().Get("afterSequence")
 	beforeSequenceString := req.URL.Query().Get("beforeSequence")
@@ -437,7 +437,7 @@ func SearchEdv(res http.ResponseWriter, req *http.Request) {
 	indexId := edvSearchRequest.Index
 	equals := edvSearchRequest.Equals
 	var equalsAll map[string]string
-	var equalsAny []map[string]string
+	equalsAny := make([]map[string]string, 0)
 
 	if equalsAllUnmarshalErr := json.Unmarshal(equals, &equalsAll); equalsAllUnmarshalErr == nil {
 		matchesBytes := SearchEdvAll(edvId, indexId, equalsAll, EdvSearchOperators.Equals, edvSearchRequest)

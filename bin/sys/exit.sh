@@ -16,7 +16,9 @@ exitLocal() {
 
 # Exit Docker server
 exitDocker() {
-  docker rm $(docker stop $(docker ps -a -q --filter ancestor=edv-server-go --format="{{.ID}}"))
+  docker compose stop edv
+  docker compose kill edv
+  docker compose rm -f edv
 }
 
 for i in "$@"; do

@@ -16,8 +16,8 @@ runLocal() {
 # Run server in Docker
 runDocker() {
   ./bin/sys/exit.sh -d
-  docker build --tag edv-server-go .
-  docker run -p $PORT:$PORT edv-server-go
+  docker compose build edv
+  docker compose up -d edv
 }
 
 for i in "$@"; do
