@@ -8,7 +8,7 @@ curl -v \
 -X POST http://localhost:5000/edvs/$EDV_ID/docs/$DOC_ID \
 -d @- << DATA
 {
-  "id": "cc34bc28-f7cf-11ec-a1a2-784f43a5dedc",
+  "id": "WHeiZMw5FToSwF6MRDGZQL",
   "sequence": 1,
   "indexed": [
     {

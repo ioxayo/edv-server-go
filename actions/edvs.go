@@ -9,11 +9,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/ioxayo/edv-server-go/common"
 	"github.com/ioxayo/edv-server-go/errors"
 	"github.com/ioxayo/edv-server-go/storage"
+	"github.com/lithammer/shortuuid/v4"
 )
 
 // Update state of EDV
@@ -298,7 +298,7 @@ func CreateEdv(res http.ResponseWriter, req *http.Request) {
 	if edvConfig.Id != "" {
 		edvId = edvConfig.Id
 	} else {
-		edvId = uuid.NewString()
+		edvId = shortuuid.New()
 	}
 	edvConfig.Id = edvId
 
