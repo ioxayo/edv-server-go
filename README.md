@@ -17,7 +17,7 @@ There are several routes defined in the EDV specification. These are the routes 
 - `GET /edvs/{edvId}/history` - get EDV history
 
 ## `StorageProvider`
-We acknowledge that EDV providers may wish to configure the API service independent of the storage layer. The `StorageProvider` interface offers this convenience. Please follow these steps if you wish to implement this interface:
+We acknowledge that EDV providers may wish to configure the API service independent of the storage layer. The `StorageProvider` interface offers this convenience. Please follow these steps if you wish to implement this interface for a new storage provider:
 1. Create a new file in the storage package and implement the methods in `StorageProvider` defined below
 2. Add a new `case` block for the new storage provider in the `switch` statement in `CreateEdv` (`actions/edvs.go`) that configures the appropriate storage provider based on the storage type
 3. Add a new `case` block for the new storage provider in the `switch` statement in `GetStorageProvider` (`storage/utils.go`) that retrieves the appropriate storage provider based on the storage type
