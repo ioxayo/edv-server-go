@@ -3,6 +3,16 @@
 ## Introduction
 This is a Go implementation of the server interface defined in the [*Encrypted Data Vaults*](https://identity.foundation/edv-spec) specification, which "describes a privacy-preserving mechanism for storing, indexing, and retrieving encrypted data at a storage provider." This is a useful service for individuals and organizations that wish to manage private data at a remote storage provider without revealing the data to them in the clear. This convenience minimizes the risk of storage providers exploiting sensitive data and provides a portable storage layer that can be migrated between compatible providers.
 
+## Run
+We have provided two commands to run the EDV server:
+1. Local: `./bin/sys/run.sh -l`
+2. Docker: `./bin/sys/run.sh -d`
+
+## Test
+We have provided two ways to test the functionality of the EDV server:
+1. Run sample scripts in the `bin` folder (note relevant command-line inputs)
+2. Run `go test -v` to run all tests located in files ending in `_test.go`
+
 ## Routes
 There are several routes defined in the EDV specification. These are the routes that we support in this library:
 - `POST /edvs` - create EDV
@@ -34,16 +44,6 @@ Below are the required methods of `StorageProvider` (*Note: At the time of this 
 - `DeleteDocClient(edvId string, docId string) errors.HttpError`: deletes an encrypted doc and returns error (if any)
 - `DeleteDocSystem(edvId string, fileType string) errors.HttpError`: deletes a system doc and returns error (if any)
 - `DocExistsClient(edvId string, docId string) (bool, errors.HttpError)`: checks if an encrypted doc exists
-
-## Run
-We have provided two commands to run the EDV server:
-1. Local: `./bin/sys/run.sh -l`
-2. Docker: `./bin/sys/run.sh -d`
-
-## Test
-We have provided two ways to test the functionality of the EDV server:
-1. Run sample scripts in the `bin` folder (note relevant command-line inputs)
-2. Run `go test -v` to run all tests located in files ending in `_test.go`
 
 ## Contributions
 To make a contribution, please do one of the following:
