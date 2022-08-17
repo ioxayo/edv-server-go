@@ -17,7 +17,14 @@ There are several routes defined in the EDV specification. These are the routes 
 - `GET /edvs/{edvId}/history` - get EDV history
 
 ## `StorageProvider`
-We respect that EDV providers may wish to configure the API service independent of the storage layer. The `StorageProvider` interface offers this convenience. Below are the required methods of `StorageProvider` (*Note: At the time of this writing, we have implemented a local storage implementation, which hosts the storage layer in the local filesystem of the same machine as the EDV service*):
+We acknowledge that EDV providers may wish to configure the API service independent of the storage layer. The `StorageProvider` interface offers this convenience. Please follow these steps if you wish to implement this interface:
+1. Create a new file in the storage package and implement the methods in `StorageProvider` defined below
+2. Add a new `case` block for the new storage provider in the `switch` statement in `CreateEdv` (`actions/edvs.go`) that configures the appropriate storage provider based on the storage type
+3. Add a new `case` block for the new storage provider in the `switch` statement in `GetStorageProvider` (`storage/utils.go`) that retrieves the appropriate storage provider based on the storage type
+4. Define a new environment variable for the new storage type in `StorageProviderTypes` (`storage/types.go`)
+5. Define all necessary environment variables for the new storage type in `EnvVars` (`common/types.go`)
+
+Below are the required methods of `StorageProvider` (*Note: At the time of this writing, we have implemented a local storage implementation, which hosts the storage layer in the local filesystem of the same machine as the EDV service*):
 - `CreateDocClient(edvId string, docId string, data []byte) (string, errors.HttpError)`: creates an encrypted doc and returns location and error (if any)
 - `CreateDocSystem(edvId string, fileType string, data []byte) errors.HttpError`: creates a system doc (e.g., config, index) and returns error (if any)
 - `ReadDocClient(edvId string, docId string) ([]byte, errors.HttpError)`: retrieves an encrypted doc and returns data and error (if any)
