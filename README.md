@@ -35,8 +35,8 @@ We have provided two commands to run the EDV server:
 
 ## Test
 We have provided two ways to test the functionality of the EDV server:
-1. Sample scripts in the `bin` folder (note relevant command-line inputs)
-2. [`TODO`] Unit tests in the `test` folder
+1. Run sample scripts in the `bin` folder (note relevant command-line inputs)
+2. Run `go test -v` to run all tests location in files ending in `_test.go`
 
 ## Contributions
 To make a contribution, please do one of the following:
